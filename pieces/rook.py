@@ -34,3 +34,14 @@ class Rook(Piece):
                 c += dc
 
         return moves
+
+    def symbol(self) -> str:
+        return 'R' if self.color == 'white' else 'r'
+
+    def can_attack(self, target: Position, board: 'Board') -> bool:
+        if self.position is None:
+            return False
+
+        valid_moves = self.get_valid_moves(board)
+        return target in valid_moves
+

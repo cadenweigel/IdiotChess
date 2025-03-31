@@ -8,21 +8,44 @@ from pieces import Pawn, Rook, Knight, Bishop, King, Queen
 Position = Tuple[int, int]
 
 class Board:
+
     def __init__(self):
         # 8x8 board initialized with None
         self.grid = [[None for _ in range(8)] for _ in range(8)]
+        self.captured_pieces: List = []  # Store removed pieces
 
     def place_piece(self, piece, position):
         row, col = position
         self.grid[row][col] = piece
         piece.set_position(position)
 
-    def move_piece(self, start_pos, end_pos):
-        piece = self.get_piece_at(start_pos)
+    def remove_piece(self, position):
+        """
+        Remove a piece from the board and store it as captured.
+        """
+        row, col = position
+        piece = self.grid[row][col]
+
         if piece:
-            self.grid[end_pos[0]][end_pos[1]] = piece
-            self.grid[start_pos[0]][start_pos[1]] = None
-            piece.set_position(end_pos)
+            piece.set_position(None)  # Clear its position
+            self.captured_pieces.append(piece)
+
+        self.grid[row][col] = None
+
+    def move_piece(self, from_pos: Position, to_pos: Position) -> bool:
+        piece = self.get_piece_at(from_pos)
+        if not piece or to_pos not in piece.get_valid_moves(self):
+            return False  # Invalid move
+
+        target = self.get_piece_at(to_pos)
+        if target and target.color != piece.color:
+            self.remove_piece(to_pos)  # Capture
+
+        self.grid[to_pos[0]][to_pos[1]] = piece
+        self.remove_piece(from_pos)
+        piece.set_position(to_pos)
+        piece.mark_as_moved()
+        return True
 
     def get_piece_at(self, position):
         row, col = position
@@ -34,6 +57,9 @@ class Board:
     def is_within_bounds(self, position):
         row, col = position
         return 0 <= row < 8 and 0 <= col < 8
+
+    def get_captured_pieces(self) -> List:
+        return self.captured_pieces
 
     def print_board(self):
         """

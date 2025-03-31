@@ -39,3 +39,9 @@ class Bishop(Piece):
                 c += dc
 
         return moves
+
+    def symbol(self) -> str:
+        return 'B' if self.color == 'white' else 'b'
+
+    def can_attack(self, target: Position, board: 'Board') -> bool:
+        return target in self.get_valid_moves(board)

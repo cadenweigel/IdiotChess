@@ -44,3 +44,9 @@ class Queen(Piece):
                 c += dc
 
         return moves
+
+    def symbol(self) -> str:
+        return 'Q' if self.color == 'white' else 'q'
+
+    def can_attack(self, target: Position, board: 'Board') -> bool:
+        return target in self.get_valid_moves(board)

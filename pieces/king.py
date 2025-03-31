@@ -38,3 +38,9 @@ class King(Piece):
                 moves.append(new_pos)
 
         return moves
+        
+    def symbol(self) -> str:
+        return 'K' if self.color == 'white' else 'k'
+
+    def can_attack(self, target: Position, board: 'Board') -> bool:
+        return target in self.get_valid_moves(board)
