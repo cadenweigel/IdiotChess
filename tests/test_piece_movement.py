@@ -1,6 +1,6 @@
 import unittest
 from app.board import Board
-from app.pieces import Pawn, Rook, Knight, Bishop, Queen, King
+from pieces import Pawn, Rook, Knight, Bishop, Queen, King
 
 
 class TestPieceMovement(unittest.TestCase):

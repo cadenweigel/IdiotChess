@@ -2,7 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Optional, List, Tuple
 
-from .pieces import Pawn, Rook, Knight, Bishop, Queen, King
+from pieces import Pawn, Rook, Knight, Bishop, King, Queen
 
 # Type alias for readability
 Position = Tuple[int, int]
