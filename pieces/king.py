@@ -1,5 +1,6 @@
 from typing import List, TYPE_CHECKING
 from .piece import Piece, Position
+import copy
 
 if TYPE_CHECKING:
     from app.board import Board  # Only for type hints
@@ -9,7 +10,7 @@ class King(Piece):
 
     def get_valid_moves(self, board: 'Board') -> List[Position]:
         """
-        Get all valid one-square moves in any direction for the king.
+        Get all valid one-square moves in any direction for the king, including legal castling.
 
         :param board: The game board
         :return: List of valid positions to which the king can move
@@ -35,10 +36,49 @@ class King(Piece):
 
             piece_at_dest = board.get_piece_at(new_pos)
             if piece_at_dest is None or piece_at_dest.color != self.color:
-                moves.append(new_pos)
+                # Simulate the move to see if it results in check
+                simulated_board = copy.deepcopy(board)
+                simulated_board.move_piece(self.position, new_pos)
+                if not simulated_board.is_in_check(self.color):
+                    moves.append(new_pos)
+
+        # Castling logic
+        if not self.has_moved and not board.is_in_check(self.color):
+            # Kingside castling
+            kingside_rook = board.get_piece_at((row, 7))
+            if (
+                isinstance(kingside_rook, Piece) and kingside_rook.__class__.__name__ == 'Rook' and
+                not kingside_rook.has_moved and
+                board.is_empty((row, 5)) and
+                board.is_empty((row, 6))
+            ):
+                # Simulate king's path through e-f-g
+                if all(
+                    not copy.deepcopy(board).move_piece(self.position, pos) or
+                    not copy.deepcopy(board).is_in_check(self.color)
+                    for pos in [(row, 5), (row, 6)]
+                ):
+                    moves.append((row, 6))
+
+            # Queenside castling
+            queenside_rook = board.get_piece_at((row, 0))
+            if (
+                isinstance(queenside_rook, Piece) and queenside_rook.__class__.__name__ == 'Rook' and
+                not queenside_rook.has_moved and
+                board.is_empty((row, 1)) and
+                board.is_empty((row, 2)) and
+                board.is_empty((row, 3))
+            ):
+                # Simulate king's path through e-d-c
+                if all(
+                    not copy.deepcopy(board).move_piece(self.position, pos) or
+                    not copy.deepcopy(board).is_in_check(self.color)
+                    for pos in [(row, 3), (row, 2)]
+                ):
+                    moves.append((row, 2))
 
         return moves
-        
+
     def symbol(self) -> str:
         return 'K' if self.color == 'white' else 'k'
 
