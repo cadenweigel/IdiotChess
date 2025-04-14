@@ -1,0 +1,84 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f3f3f3;
+    margin: 0;
+    padding: 1rem;
+  }
+  
+  h1 {
+    margin-bottom: 1rem;
+  }
+  
+  #theme-selector {
+    margin-bottom: 1rem;
+  }
+  
+  button {
+    margin: 0 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  /* Board layout */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, 60px);
+    grid-template-rows: repeat(8, 60px);
+    margin: 0 auto;
+    border: 4px solid #333;
+  }
+  
+  /* Square base style */
+  .square {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Piece image */
+  .square img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+    pointer-events: none;
+  }
+  
+  /* Classic theme */
+  .board.classic .light {
+    background-color: #f0d9b5;
+  }
+  .board.classic .dark {
+    background-color: #b58863;
+  }
+  
+  /* Blue theme */
+  .board.blue .light {
+    background-color: #dfefff;
+  }
+  .board.blue .dark {
+    background-color: #547aa5;
+  }
+  
+  /* Green theme */
+  .board.green .light {
+    background-color: #e0f8d0;
+  }
+  .board.green .dark {
+    background-color: #689d6a;
+  }
+  
+  /* Highlighting (optional for selected pieces/moves) */
+  .square.selected {
+    outline: 3px solid gold;
+  }
+  
+  #message {
+    margin-top: 1rem;
+    font-weight: bold;
+    color: #444;
+  }
+  

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chess Game</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/play.css') }}">
+</head>
+<body>
+  <h1>Play Chess</h1>
+
+  <!-- Theme Selector -->
+  <div id="theme-selector">
+    <label>Board Theme:</label>
+    <button onclick="setTheme('classic')">Classic</button>
+    <button onclick="setTheme('blue')">Blue</button>
+    <button onclick="setTheme('green')">Green</button>
+  </div>
+
+  <!-- Chessboard Container -->
+  <div id="board" class="board classic"></div>
+
+  <!-- Message Box -->
+  <div id="message"></div>
+
+  <!-- JS -->
+  <script>
+    function setTheme(theme) {
+      const board = document.getElementById('board');
+      board.className = 'board ' + theme;
+    }
+  </script>
+  <script src="{{ url_for('static', filename='js/play.js') }}"></script>
+</body>
+</html>
