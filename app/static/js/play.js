@@ -54,5 +54,43 @@ function renderBoard(board) {
   }
 }
 
+function setBoardTheme(theme) {
+  // Remove all known theme classes
+  const themes = ['classic', 'blue', 'green', 'gray'];
+  themes.forEach(t => boardEl.classList.remove(t));
+
+  // Add the selected theme
+  boardEl.classList.add(theme);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const currentThemeBtn = document.getElementById("currentTheme");
+  const themeOptions = document.getElementById("themeOptions");
+
+  currentThemeBtn.addEventListener("click", () => {
+    themeOptions.classList.toggle("hidden");
+  });
+
+  themeOptions.addEventListener("click", (e) => {
+    const option = e.target.closest(".theme-option");
+    if (!option) return;
+
+    const theme = option.dataset.theme;
+
+    // Update button text and swatch class
+    currentThemeBtn.innerHTML = `<span class="swatch swatch-${theme}"></span> ${theme.charAt(0).toUpperCase() + theme.slice(1)}`;
+
+    themeOptions.classList.add("hidden");
+
+    setBoardTheme(theme);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!document.querySelector(".custom-theme-picker").contains(e.target)) {
+      themeOptions.classList.add("hidden");
+    }
+  });
+});
+
 // Initial load
 loadBoard();

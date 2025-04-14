@@ -1,84 +1,151 @@
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #f3f3f3;
-    margin: 0;
-    padding: 1rem;
-  }
-  
-  h1 {
-    margin-bottom: 1rem;
-  }
-  
-  #theme-selector {
-    margin-bottom: 1rem;
-  }
-  
-  button {
-    margin: 0 0.5rem;
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-  
-  /* Board layout */
-  .board {
-    display: grid;
-    grid-template-columns: repeat(8, 60px);
-    grid-template-rows: repeat(8, 60px);
-    margin: 0 auto;
-    border: 4px solid #333;
-  }
-  
-  /* Square base style */
-  .square {
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  /* Piece image */
-  .square img {
-    width: 90%;
-    height: 90%;
-    object-fit: contain;
-    pointer-events: none;
-  }
-  
-  /* Classic theme */
-  .board.classic .light {
-    background-color: #f0d9b5;
-  }
-  .board.classic .dark {
-    background-color: #b58863;
-  }
-  
-  /* Blue theme */
-  .board.blue .light {
-    background-color: #dfefff;
-  }
-  .board.blue .dark {
-    background-color: #547aa5;
-  }
-  
-  /* Green theme */
-  .board.green .light {
-    background-color: #e0f8d0;
-  }
-  .board.green .dark {
-    background-color: #689d6a;
-  }
-  
-  /* Highlighting (optional for selected pieces/moves) */
-  .square.selected {
-    outline: 3px solid gold;
-  }
-  
-  #message {
-    margin-top: 1rem;
-    font-weight: bold;
-    color: #444;
-  }
-  
+  font-family: Arial, sans-serif;
+  background-color: #f3f3f3;
+  margin: 0;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 {
+  margin-bottom: 1rem;
+}
+
+.board-container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.board-wrapper {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.theme-picker-wrapper {
+  position: absolute;
+  top: 0;
+  left: -220px; /* enough space to the left of board */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.theme-label {
+  margin-bottom: 0.25rem;
+  font-weight: bold;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.custom-theme-picker {
+  position: relative;
+  width: 200px;
+  margin-bottom: 1rem;
+  -webkit-user-select: none; /* Safari compatibility */
+  user-select: none;
+}
+
+.theme-button {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.theme-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid #ccc;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.theme-option {
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.theme-option:hover {
+  background-color: #eee;
+}
+
+.swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.swatch-classic { background-color: #b58863; }
+.swatch-blue { background-color: #547aa5; }
+.swatch-green { background-color: #497f4b; }
+.swatch-gray { background-color: #a9a9a9; }
+
+.hidden {
+  display: none;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 80px);
+  grid-template-rows: repeat(8, 80px);
+  margin: 0;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+.square {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease; /* smooth theme change */
+}
+
+.square img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Board themes */
+.board.classic .light { background-color: #f0d9b5; }
+.board.classic .dark { background-color: #b58863; }
+
+.board.blue .light { background-color: #dfefff; }
+.board.blue .dark { background-color: #547aa5; }
+
+.board.green .light { background-color: #e0f8d0; }
+.board.green .dark { background-color: #689d6a; }
+
+.board.gray .light { background-color: #d3d3d3; }
+.board.gray .dark { background-color: #a9a9a9; }
+
+/* Optional: Highlight for selected squares */
+.square.selected {
+  outline: 3px solid gold;
+}
+
+#message {
+  margin-top: 1rem;
+  font-weight: bold;
+  color: #444;
+}

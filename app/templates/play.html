@@ -3,24 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chess Game</title>
+  <title>IdiotChess</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/play.css') }}">
 </head>
 <body>
-  <h1>Play Chess</h1>
+  
+  <h1>Idiot Chess</h1>
 
-  <!-- Theme Selector -->
-  <div id="theme-selector">
-    <label>Board Theme:</label>
-    <button onclick="setTheme('classic')">Classic</button>
-    <button onclick="setTheme('blue')">Blue</button>
-    <button onclick="setTheme('green')">Green</button>
+  <div class="board-wrapper">
+    <!-- Theme Picker (positioned to the left of the board) -->
+    <div class="theme-picker-wrapper">
+      <label for="currentTheme" class="theme-label">Board Color Theme:</label>
+      <div class="custom-theme-picker">
+        <button id="currentTheme" class="theme-button">
+          <span class="swatch swatch-classic"></span>
+          Classic
+        </button>
+        <div class="theme-options hidden" id="themeOptions">
+          <div class="theme-option" data-theme="classic">
+            <span class="swatch swatch-classic"></span>
+            Classic
+          </div>
+          <div class="theme-option" data-theme="blue">
+            <span class="swatch swatch-blue"></span>
+            Blue
+          </div>
+          <div class="theme-option" data-theme="green">
+            <span class="swatch swatch-green"></span>
+            Green
+          </div>
+          <div class="theme-option" data-theme="gray">
+            <span class="swatch swatch-gray"></span>
+            Gray
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chessboard -->
+    <div id="board" class="board classic"></div>
   </div>
 
-  <!-- Chessboard Container -->
-  <div id="board" class="board classic"></div>
-
-  <!-- Message Box -->
   <div id="message"></div>
 
   <!-- JS -->
