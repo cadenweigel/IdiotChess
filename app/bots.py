@@ -21,3 +21,11 @@ class IdiotBot(Player):
                         all_moves.append(((row, col), move))
 
         return random.choice(all_moves) if all_moves else None
+
+class WhiteIdiotBot(IdiotBot):
+    def __init__(self):
+        super().__init__(name="Wyatt", color="white")
+
+class BlackIdiotBot(IdiotBot):
+    def __init__(self):
+        super().__init__(name="Moose", color="black")

@@ -2,9 +2,15 @@ import uuid
 from flask import Blueprint, jsonify, current_app, render_template, request
 from app.game import GameManager
 from app.player import HumanPlayer
-from app.bots import IdiotBot
+from app.bots import IdiotBot, WhiteIdiotBot, BlackIdiotBot
 
 api = Blueprint("api", __name__)
+
+BOT_REGISTRY = {
+    "white_idiot": WhiteIdiotBot,
+    "black_idiot": BlackIdiotBot,
+    # Add others here
+}
 
 @api.route("/")
 def index():
@@ -16,29 +22,61 @@ def play():
 
 @api.route("/api/new-game/bot", methods=["POST"])
 def new_game_vs_bot():
+    data = request.get_json()
+    bot_color = data.get("bot_color", "black")  # default to black bot
+
     session_id = str(uuid.uuid4())
     manager = GameManager()
 
-    manager.set_players(
-        HumanPlayer(name="You", color="white"),
-        IdiotBot(name="Bot", color="black")
-    )
+    if bot_color == "white":
+        manager.set_players(
+            IdiotBot(name="Wyatt", color="white"),
+            HumanPlayer(name="You", color="black")
+        )
+    elif bot_color == "black":
+        manager.set_players(
+            HumanPlayer(name="You", color="white"),
+            IdiotBot(name="Moose", color="black")
+        )
 
     current_app.config["games"][session_id] = manager
     return jsonify({"session_id": session_id})
 
 @api.route("/api/new-game/bots", methods=["POST"])
 def new_game_bots_only():
+    data = request.get_json()
+    white_key = data.get("white_bot", "white_idiot")
+    black_key = data.get("black_bot", "black_idiot")
+
+    white_bot_cls = BOT_REGISTRY.get(white_key)
+    black_bot_cls = BOT_REGISTRY.get(black_key)
+
+    if not white_bot_cls or not black_bot_cls:
+        return jsonify({"error": "Invalid bot selection"}), 400
+
     session_id = str(uuid.uuid4())
     manager = GameManager()
 
     manager.set_players(
-        IdiotBot(name="Wyatt", color="white"),
-        IdiotBot(name="Moose", color="black")
+        white_bot_cls(),  # enforced white bot
+        black_bot_cls()   # enforced black bot
     )
 
     current_app.config["games"][session_id] = manager
     return jsonify({"session_id": session_id})
+
+@api.route("/api/bots", methods=["GET"])
+def get_available_bots():
+    return jsonify({
+        "bots": [
+            {"id": "white_idiot", "name": "Wyatt", "description": "Picks a random legal move. Plays white.", "avatar": "wyatt.png"},
+            {"id": "black_idiot", "name": "Moose", "description": "Picks a random legal move. Plays black.", "avatar": "moose.png"}
+            # later you can add more like:
+            # {"id": "minimax", "name": "MinimaxBot"},
+            # {"id": "chaotic", "name": "ChaoticBot"},
+        ]
+    })
+
 
 @api.route("/api/board", methods=["GET"])
 def get_board_state():

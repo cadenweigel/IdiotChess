@@ -10,11 +10,17 @@ const pieceImageMap = {
   'b': 'black_bishop.png', 'q': 'black_queen.png', 'k': 'black_king.png',
 };
 
-export async function loadBoard() {
-  const sessionId = await ensureSession();
-  const response = await fetch(`/api/board?session_id=${sessionId}`);
-  const data = await response.json();
+export async function loadBoard(sessionId) {
+  const res = await fetch(`/api/board?session_id=${sessionId}`);
+  const data = await res.json();
+
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+
   renderBoard(data.board);
+  updateStatus(data.status);
 }
 
 function renderBoard(board) {
