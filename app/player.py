@@ -1,5 +1,5 @@
 import random
-from board import Board
+from app.board import Board
 
 class Player:
     def __init__(self, name: str, color: str, image: str = None):

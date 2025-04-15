@@ -8,11 +8,32 @@
   <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
 </head>
 <body>
-  
   <h1>Idiot Chess</h1>
 
-  <div class="board-wrapper">
-    <!-- Theme Picker (positioned to the left of the board) -->
+  <div class="game-layout">
+    <!-- Left panel: Game Info -->
+    <aside class="side-panel left-panel">
+      <h2>Game Info</h2>
+      <div id="move-history"></div>
+      <div id="captured-pieces"></div>
+    </aside>
+
+    <!-- Center: Board and Theme Picker -->
+    <main class="main-board-area">
+      <div class="board-wrapper">
+
+        <!-- Chessboard -->
+        <div id="board" class="board classic"></div>
+      </div>
+
+      <div id="message"></div>
+    </main>
+
+    <!-- Right panel: Settings -->
+    <aside class="side-panel right-panel">
+    <h2>Settings</h2>
+
+    <!-- Theme Picker -->
     <div class="theme-picker-wrapper">
       <label for="currentTheme" class="theme-label">Board Color Theme:</label>
       <div class="custom-theme-picker">
@@ -21,39 +42,28 @@
           Classic
         </button>
         <div class="theme-options hidden" id="themeOptions">
-          <div class="theme-option" data-theme="classic">
-            <span class="swatch swatch-classic"></span>
-            Classic
-          </div>
-          <div class="theme-option" data-theme="blue">
-            <span class="swatch swatch-blue"></span>
-            Blue
-          </div>
-          <div class="theme-option" data-theme="green">
-            <span class="swatch swatch-green"></span>
-            Green
-          </div>
-          <div class="theme-option" data-theme="gray">
-            <span class="swatch swatch-gray"></span>
-            Gray
-          </div>
+          <div class="theme-option" data-theme="classic"><span class="swatch swatch-classic"></span>Classic</div>
+          <div class="theme-option" data-theme="blue"><span class="swatch swatch-blue"></span>Blue</div>
+          <div class="theme-option" data-theme="green"><span class="swatch swatch-green"></span>Green</div>
+          <div class="theme-option" data-theme="gray"><span class="swatch swatch-gray"></span>Gray</div>
         </div>
       </div>
     </div>
 
-    <!-- Chessboard -->
-    <div id="board" class="board classic"></div>
-  </div>
+      <!-- Other settings -->
+      <button id="reset-game">Reset Game</button>
+      <button id="flip-board">Flip Board</button>
+    </aside>
 
-  <div id="message"></div>
+  </div>
 
   <!-- JS -->
   <script>
     function setTheme(theme) {
-      const board = document.getElementById('board');
-      board.className = 'board ' + theme;
+      document.getElementById('board').className = 'board ' + theme;
     }
   </script>
-  <script src="{{ url_for('static', filename='js/play.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/play.js') }}"></script>
 </body>
+
 </html>

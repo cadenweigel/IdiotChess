@@ -1,14 +1,10 @@
 import uuid
 from flask import Blueprint, jsonify, current_app, render_template, request
-from game import GameManager
-from player import HumanPlayer
-from bots import IdiotBot
+from app.game import GameManager
+from app.player import HumanPlayer
+from app.bots import IdiotBot
 
 api = Blueprint("api", __name__)
-
-# Initialize games storage
-if "games" not in current_app.config:
-    current_app.config["games"] = {}
 
 @api.route("/")
 def index():
