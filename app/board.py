@@ -13,6 +13,9 @@ class Board:
         self.grid = [[None for _ in range(8)] for _ in range(8)]
         self.captured_pieces: List = []  # Store removed pieces
         self.last_move: Optional[Tuple[Position, Position]] = None  # Track last move (for en passant)
+        self.halfmove_clock = 0  # Half-move counter (50-move rule)
+        self.history = {}  # FEN-like position hash to count repetitions
+        self.current_turn = 'white'  # Needed for repetition tracking
 
     def place_piece(self, piece, position):
         row, col = position
@@ -57,6 +60,18 @@ class Board:
         piece.set_position(to_pos)
         piece.mark_as_moved()
         self.last_move = (from_pos, to_pos)
+
+        # Update halfmove clock
+        if isinstance(piece, Pawn) or self.get_piece_at(to_pos):
+            self.halfmove_clock = 0
+        else:
+            self.halfmove_clock += 1
+
+        # Track repetition
+        self.record_position()
+
+        # Toggle turn
+        self.current_turn = 'black' if self.current_turn == 'white' else 'white'
 
         if isinstance(piece, Pawn):
             self.handle_promotion(piece, to_pos, promotion_piece_cls)
@@ -122,6 +137,42 @@ class Board:
 
     def is_stalemate(self, color: str) -> bool:
         return not self.is_in_check(color) and not self.has_any_valid_moves(color)
+    
+    def is_draw(self, color: str) -> bool:
+        """
+        Returns True if the current position is a draw by:
+        - stalemate
+        - insufficient material
+        - 50-move rule
+        - threefold repetition
+        """
+        return (
+            self.is_stalemate(color)
+            or self.is_insufficient_material()
+            or self.is_fifty_move_rule()
+            or self.is_threefold_repetition()
+        )
+    
+    def get_draw_reason(self, color: str) -> Optional[str]:
+        """
+        Returns the reason for a draw, or None if no draw applies.
+        Priority:
+        - stalemate
+        - 50-move rule
+        - threefold repetition
+        - insufficient material
+        """
+        if self.is_stalemate(color):
+            return "stalemate"
+        if self.is_fifty_move_rule():
+            return "50-move rule"
+        if self.is_threefold_repetition():
+            return "threefold repetition"
+        if self.is_insufficient_material():
+            return "insufficient material"
+        return None
+
+
 
     def is_en_passant_capture(self, pawn: Pawn, from_pos: Position, to_pos: Position) -> bool:
         from_row, from_col = from_pos
@@ -160,6 +211,48 @@ class Board:
             promoted_cls = promotion_piece_cls or Queen
             promoted_piece = promoted_cls(pawn.color)
             self.place_piece(promoted_piece, to_pos)
+
+    def is_insufficient_material(self) -> bool:
+        """
+        Returns True if neither player has sufficient material to checkmate.
+        """
+        white_pieces = []
+        black_pieces = []
+
+        for row in self.grid:
+            for piece in row:
+                if piece is None or piece.__class__.__name__ == "King":
+                    continue
+                if piece.color == "white":
+                    white_pieces.append(piece)
+                else:
+                    black_pieces.append(piece)
+
+        all_pieces = white_pieces + black_pieces
+
+        if any(p.__class__.__name__ in ("Queen", "Rook", "Pawn") for p in all_pieces):
+            return False
+
+        if len(all_pieces) == 0:
+            return True  # King vs King
+
+        if len(all_pieces) == 1:
+            return all_pieces[0].__class__.__name__ in ("Bishop", "Knight")
+
+        if len(all_pieces) == 2:
+            types = {p.__class__.__name__ for p in all_pieces}
+            if types == {"Bishop"}:
+                bishops = [p for p in all_pieces if p.__class__.__name__ == "Bishop"]
+                if len(bishops) == 2:
+                    # Check square colors
+                    colors = set()
+                    for b in bishops:
+                        if b.position:
+                            row, col = b.position
+                            colors.add((row + col) % 2)  # 0 = dark, 1 = light
+                    return len(colors) == 1  # same color squares
+        return False
+
 
     def get_piece_at(self, position):
         row, col = position
@@ -233,3 +326,25 @@ class Board:
         self.place_piece(Rook("black"), (0, 7))
         for col in range(8):
             self.place_piece(Pawn("black"), (1, col))
+
+    def generate_position_key(self) -> str:
+        key = ""
+        for row in self.grid:
+            for piece in row:
+                if piece is None:
+                    key += "."
+                else:
+                    key += piece.symbol()
+        key += f"_{self.current_turn}"
+        return key
+
+    def record_position(self):
+        key = self.generate_position_key()
+        self.history[key] = self.history.get(key, 0) + 1
+
+    def is_threefold_repetition(self) -> bool:
+        return any(count >= 3 for count in self.history.values())
+
+    def is_fifty_move_rule(self) -> bool:
+        return self.halfmove_clock >= 100
+
