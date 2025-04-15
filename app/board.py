@@ -32,13 +32,14 @@ class Board:
 
         self.grid[row][col] = None
 
-    def move_piece(self, from_pos: Position, to_pos: Position, promotion_piece_cls=None) -> bool:
+    def move_piece(self, from_pos: Position, to_pos: Position, promotion_piece_cls=None, validate: bool = True) -> bool:
         """
         Move a piece from one position to another.
         Supports capturing, en passant, pawn promotion, and castling.
+        If validate=False, skips checking if the move is in the piece's legal move list.
         """
         piece = self.get_piece_at(from_pos)
-        if not piece or to_pos not in piece.get_valid_moves(self):
+        if validate and (not piece or to_pos not in piece.get_valid_moves(self)):
             return False  # Invalid move
 
         # Handle castling

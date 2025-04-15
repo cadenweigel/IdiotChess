@@ -11,9 +11,6 @@ class King(Piece):
     def get_valid_moves(self, board: 'Board') -> List[Position]:
         """
         Get all valid one-square moves in any direction for the king, including legal castling.
-
-        :param board: The game board
-        :return: List of valid positions to which the king can move
         """
         moves: List[Position] = []
 
@@ -38,7 +35,7 @@ class King(Piece):
             if piece_at_dest is None or piece_at_dest.color != self.color:
                 # Simulate the move to see if it results in check
                 simulated_board = copy.deepcopy(board)
-                simulated_board.move_piece(self.position, new_pos)
+                simulated_board.move_piece(self.position, new_pos, validate=False)
                 if not simulated_board.is_in_check(self.color):
                     moves.append(new_pos)
 
@@ -52,9 +49,8 @@ class King(Piece):
                 board.is_empty((row, 5)) and
                 board.is_empty((row, 6))
             ):
-                # Simulate king's path through e-f-g
                 if all(
-                    not copy.deepcopy(board).move_piece(self.position, pos) or
+                    not copy.deepcopy(board).move_piece(self.position, pos, validate=False) or
                     not copy.deepcopy(board).is_in_check(self.color)
                     for pos in [(row, 5), (row, 6)]
                 ):
@@ -69,9 +65,8 @@ class King(Piece):
                 board.is_empty((row, 2)) and
                 board.is_empty((row, 3))
             ):
-                # Simulate king's path through e-d-c
                 if all(
-                    not copy.deepcopy(board).move_piece(self.position, pos) or
+                    not copy.deepcopy(board).move_piece(self.position, pos, validate=False) or
                     not copy.deepcopy(board).is_in_check(self.color)
                     for pos in [(row, 3), (row, 2)]
                 ):
