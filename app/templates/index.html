@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IdiotChess</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to IdiotChess</h1>
+
+    <form id="start-game-form">
+      <label for="mode">Mode:</label>
+      <select id="mode" name="mode">
+        <option value="vs-bot">Play a Bot</option>
+        <option value="bot-vs-bot">Watch Bots</option>
+      </select>
+
+      <div id="vs-bot-settings">
+        <label for="bot-choice">Choose Bot Opponent:</label>
+        <select id="bot-choice" name="bot-choice">
+          <option value="white">Wyatt (you play black)</option>
+          <option value="black">Moose (you play white)</option>
+        </select>
+        <p id="vs-bot-description" class="bot-description"></p>
+        <img id="vs-bot-avatar" class="bot-avatar" alt="Bot avatar" />
+      </div>
+
+      <div id="bot-vs-bot-settings">
+          <!-- White Bot Row -->
+          <div class="bot-row">
+            <img id="white-bot-avatar" class="bot-avatar" alt="White bot avatar" />
+            <div class="bot-info">
+              <label for="white-bot">White Bot:</label>
+              <select id="white-bot" name="white-bot"></select>
+              <p id="white-bot-description" class="bot-description"></p>
+            </div>
+          </div>
+
+          <!-- Black Bot Row -->
+          <div class="bot-row">
+            <img id="black-bot-avatar" class="bot-avatar" alt="Black bot avatar" />
+            <div class="bot-info">
+              <label for="black-bot">Black Bot:</label>
+              <select id="black-bot" name="black-bot"></select>
+              <p id="black-bot-description" class="bot-description"></p>
+            </div>
+        </div>
+      </div>
+
+      <button type="submit">Start Game</button>
+    </form>
+  </div>
+
+  <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
+</body>
+</html>
