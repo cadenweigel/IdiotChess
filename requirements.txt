@@ -1,2 +1,5 @@
-flask
 pytest
+flask
+Flask-SQLAlchemy
+psycopg2-binary
+Flask-Login
