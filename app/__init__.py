@@ -15,11 +15,12 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
-    
+    CORS(app)  # Allow frontend on different origin (e.g., React dev server)
+
     from .api import api
     app.register_blueprint(api, url_prefix="/api")
 
-    # Import and register blueprints/routes here later
     return app
+
 
 

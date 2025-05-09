@@ -1,0 +1,49 @@
+.bot-selection-container {
+    text-align: center;
+    padding: 2rem;
+  }
+  
+  .bot-grid {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+  
+  .bot-card {
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 10px;
+    background: white;
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: pointer;
+  }
+  
+  .bot-card:hover {
+    transform: scale(1.05);
+    border-color: #aaa;
+  }
+  
+  .bot-card.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 10px #007bff;
+  }
+  
+  .bot-card img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+  }
+  
+  .bot-card span {
+    display: block;
+    margin-top: 8px;
+    font-weight: bold;
+  }
+  
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
