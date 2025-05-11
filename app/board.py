@@ -42,15 +42,42 @@ class Board:
         If validate=False, skips checking if the move is in the piece's legal move list.
         """
         piece = self.get_piece_at(from_pos)
-        if validate and (not piece or to_pos not in piece.get_valid_moves(self)):
-            return False  # Invalid move
+        if not piece:
+            return False
+
+        # If we're validating moves, check if the move is legal
+        if validate:
+            # First check if the move is in the piece's valid moves
+            if to_pos not in piece.get_valid_moves(self):
+                return False
+
+            # Create a test board to check if the move would leave us in check
+            test_board = copy.deepcopy(self)
+            test_board.move_piece(from_pos, to_pos, validate=False)
+            if test_board.is_in_check(piece.color):
+                return False
+
+            # If we're in check, verify this move gets us out of check
+            if self.is_in_check(piece.color):
+                test_board = copy.deepcopy(self)
+                if not test_board.move_piece(from_pos, to_pos, validate=False) or test_board.is_in_check(piece.color):
+                    return False
+
+        # Store information about the last move before any modifications
+        last_move_info = None
+        if self.last_move:
+            last_from, last_to = self.last_move
+            last_piece = self.get_piece_at(last_to)
+            if last_piece:
+                last_move_info = (last_from, last_to, last_piece)
+        self.last_move = (from_pos, to_pos)
 
         # Handle castling
         if isinstance(piece, King) and abs(from_pos[1] - to_pos[1]) == 2:
             self.handle_castling(piece, from_pos, to_pos)
 
         # Handle en passant
-        if isinstance(piece, Pawn) and self.is_en_passant_capture(piece, from_pos, to_pos):
+        if isinstance(piece, Pawn) and last_move_info and self.is_en_passant_capture(piece, from_pos, to_pos, last_move_info):
             self.handle_en_passant(piece, from_pos, to_pos)
         else:
             self.handle_capture(to_pos)
@@ -59,7 +86,6 @@ class Board:
         self.remove_piece(from_pos)
         piece.set_position(to_pos)
         piece.mark_as_moved()
-        self.last_move = (from_pos, to_pos)
 
         # Update halfmove clock
         if isinstance(piece, Pawn) or self.get_piece_at(to_pos):
@@ -172,19 +198,16 @@ class Board:
             return "insufficient material"
         return None
 
-
-
-    def is_en_passant_capture(self, pawn: Pawn, from_pos: Position, to_pos: Position) -> bool:
+    def is_en_passant_capture(self, pawn: Pawn, from_pos: Position, to_pos: Position, last_move_info=None) -> bool:
         from_row, from_col = from_pos
         to_row, to_col = to_pos
         if abs(from_col - to_col) != 1 or not self.is_empty(to_pos):
             return False
 
-        if not self.last_move:
+        if not last_move_info:
             return False
 
-        last_from, last_to = self.last_move
-        last_piece = self.get_piece_at(last_to)
+        last_from, last_to, last_piece = last_move_info
 
         return (
             isinstance(last_piece, Pawn) and
@@ -252,7 +275,6 @@ class Board:
                             colors.add((row + col) % 2)  # 0 = dark, 1 = light
                     return len(colors) == 1  # same color squares
         return False
-
 
     def get_piece_at(self, position):
         row, col = position
@@ -347,4 +369,29 @@ class Board:
 
     def is_fifty_move_rule(self) -> bool:
         return self.halfmove_clock >= 100
+
+    def copy(self) -> 'Board':
+        """
+        Creates a deep copy of the board.
+        """
+        new_board = Board()
+        # Deep copy the grid with pieces
+        new_board.grid = [[None for _ in range(8)] for _ in range(8)]
+        for row in range(8):
+            for col in range(8):
+                piece = self.grid[row][col]
+                if piece:
+                    # Create a new instance of the same piece type
+                    new_piece = piece.__class__(piece.color)
+                    new_piece.set_position((row, col))
+                    if hasattr(piece, 'has_moved'):
+                        new_piece.has_moved = piece.has_moved
+                    new_board.grid[row][col] = new_piece
+        
+        new_board.captured_pieces = self.captured_pieces.copy()
+        new_board.last_move = self.last_move
+        new_board.halfmove_clock = self.halfmove_clock
+        new_board.history = self.history.copy()
+        new_board.current_turn = self.current_turn
+        return new_board
 

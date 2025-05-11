@@ -163,6 +163,15 @@ def bot_move():
     try:
         # Get the bot's move using the board directly
         move = player.decide_move(manager.board)
+        
+        # If no move is found and we're in checkmate, return a special response
+        if not move and manager.board.is_checkmate(player.color):
+            return jsonify({
+                'success': True,
+                'status': 'checkmate',
+                'winner': 'black' if player.color == 'white' else 'white'
+            })
+            
         if not move:
             return jsonify({'error': 'No valid move found'}), 400
             

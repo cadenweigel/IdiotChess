@@ -43,7 +43,30 @@ async function handleSquareClick(event) {
 
     if (getSelectedSquare()) {
         const fromPos = getSelectedSquare().dataset.position.split(',').map(Number);
-        const response = await fetch('/api/move', {
+        
+        // Check if clicking a different piece of the same color
+        const response = await fetch(`/api/valid-moves?session_id=${getSessionId()}&position=${position.join(',')}`);
+        const data = await response.json();
+        
+        if (data.valid_moves && data.valid_moves.length > 0) {
+            // If clicking a different piece of the same color, select that piece instead
+            setSelectedSquare(square);
+            highlightSquare(square);
+            highlightValidMoves(data.valid_moves);
+            return;
+        }
+        
+        // Check if the destination is a valid move
+        const validMovesResponse = await fetch(`/api/valid-moves?session_id=${getSessionId()}&position=${fromPos.join(',')}`);
+        const validMovesData = await validMovesResponse.json();
+        
+        if (!validMovesData.valid_moves || !validMovesData.valid_moves.some(move => 
+            move[0] === position[0] && move[1] === position[1])) {
+            setSelectedSquare(null);
+            return;
+        }
+
+        const moveResponse = await fetch('/api/move', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -53,7 +76,7 @@ async function handleSquareClick(event) {
             })
         });
 
-        const result = await response.json();
+        const result = await moveResponse.json();
         if (result.success) {
             await updateBoard();
             updateStatus(result.status);
@@ -65,6 +88,8 @@ async function handleSquareClick(event) {
             if ((newState.turn === 'white' && getWhiteBot() !== 'You') || (newState.turn === 'black' && getBlackBot() !== 'You')) {
                 await makeBotMove();
             }
+        } else {
+            setSelectedSquare(null);
         }
     } else {
         const response = await fetch(`/api/valid-moves?session_id=${getSessionId()}&position=${position.join(',')}`);

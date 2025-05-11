@@ -58,6 +58,32 @@ function updateStatus(message) {
     if (statusMessage) {
         statusMessage.textContent = message;
     }
+
+    // Check for game over conditions
+    if (message.includes('checkmate') || message.includes('stalemate') || message.includes('draw')) {
+        showGameOver(message);
+    }
+}
+
+// Show game over overlay
+function showGameOver(message) {
+    const gameOverOverlay = document.getElementById('game-over-overlay');
+    const gameOverMessage = document.getElementById('game-over-message');
+    const gameOverDetails = document.getElementById('game-over-details');
+    
+    if (message.includes('checkmate')) {
+        const winner = message.includes('White') ? 'White' : 'Black';
+        gameOverMessage.textContent = 'Checkmate!';
+        gameOverDetails.textContent = `${winner} wins!`;
+    } else if (message.includes('stalemate')) {
+        gameOverMessage.textContent = 'Stalemate!';
+        gameOverDetails.textContent = 'The game is a draw.';
+    } else if (message.includes('draw')) {
+        gameOverMessage.textContent = 'Game Drawn';
+        gameOverDetails.textContent = message;
+    }
+    
+    gameOverOverlay.style.display = 'flex';
 }
 
 // Convert algebraic notation to backend position
