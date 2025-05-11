@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
-from app.game import GameManager
-from app.player import HumanPlayer
-from app.bots import WhiteIdiotBot, BlackIdiotBot
+from api.game import GameManager
+from api.player import HumanPlayer
+from api.bots import WhiteIdiotBot, BlackIdiotBot
 import uuid
 
 api = Blueprint("api", __name__)  # ← NO url_prefix here

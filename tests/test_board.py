@@ -1,6 +1,6 @@
 
 import pytest
-from app.board import Board
+from api.board import Board
 from pieces import Pawn, Rook, Knight, Bishop, Queen, King
 
 

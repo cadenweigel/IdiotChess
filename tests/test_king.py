@@ -1,4 +1,4 @@
-from app.board import Board
+from api.board import Board
 from pieces import King, Rook, Queen, Pawn
 
 

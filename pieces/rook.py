@@ -2,7 +2,7 @@ from typing import List, TYPE_CHECKING
 from .piece import Piece, Position
 
 if TYPE_CHECKING:
-    from app.board import Board  # Only for type hints
+    from api.board import Board  # Only for type hints
 
 class Rook(Piece):
     """Represents a rook in a game of chess."""

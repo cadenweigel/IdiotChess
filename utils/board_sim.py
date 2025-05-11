@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pieces.piece import Position
-    from app.board import Board
+    from api.board import Board
 
 def simulate_move(board: "Board", from_pos: "Position", to_pos: "Position") -> "Board":
     """
