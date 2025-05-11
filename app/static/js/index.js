@@ -83,12 +83,24 @@ document.getElementById("start-game-form").addEventListener("submit", async (e) 
   let response;
   try {
     if (mode === "vs-bot") {
-      const botColor = document.getElementById("bot-choice").value;
+      const botChoice = document.getElementById("bot-choice");
+      const botColor = botChoice.value;
+      console.log('Selected bot color:', botColor); // Debug log
+      
       response = await fetch("/api/new-game/bot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bot_color: botColor })
       });
+      
+      const data = await response.json();
+      if (data.session_id) {
+        const playUrl = `/play?session_id=${data.session_id}&bot_color=${botColor}`;
+        console.log('Redirecting to:', playUrl); // Debug log
+        window.location.href = playUrl;
+      } else {
+        alert("Failed to start game.");
+      }
     } else {
       const whiteBot = document.getElementById("white-bot").value;
       const blackBot = document.getElementById("black-bot").value;
@@ -97,13 +109,13 @@ document.getElementById("start-game-form").addEventListener("submit", async (e) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ white_bot: whiteBot, black_bot: blackBot })
       });
-    }
-
-    const data = await response.json();
-    if (data.session_id) {
-      window.location.href = `/play?session_id=${data.session_id}`;
-    } else {
-      alert("Failed to start game.");
+      
+      const data = await response.json();
+      if (data.session_id) {
+        window.location.href = `/play?session_id=${data.session_id}`;
+      } else {
+        alert("Failed to start game.");
+      }
     }
   } catch (err) {
     console.error("Error starting game:", err);

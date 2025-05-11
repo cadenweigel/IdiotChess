@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>IdiotChess - Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/play.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
+</head>
+<body>
+    <div class="container">
+        <div class="game-header">
+            <h1>IdiotChess</h1>
+            <div class="game-status">
+                <span id="status-message">Game in progress...</span>
+            </div>
+        </div>
+
+        <div class="game-container">
+            <div class="board-container">
+                <div id="chessboard"></div>
+                <div id="game-not-started-overlay" class="overlay">
+                    <div class="overlay-content">
+                        <p>Click "Start Game" to begin</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-info">
+                <div id="white-player-info" class="player-info white-player">
+                    <img id="white-avatar" class="player-avatar" alt="White player avatar" />
+                    <div class="player-details">
+                        <h3 id="white-name">White Player</h3>
+                    </div>
+                </div>
+
+                <div class="move-history">
+                    <h3>Move History</h3>
+                    <div id="moves-list"></div>
+                </div>
+
+                <div id="black-player-info" class="player-info black-player">
+                    <img id="black-avatar" class="player-avatar" alt="Black player avatar" />
+                    <div class="player-details">
+                        <h3 id="black-name">Black Player</h3>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <button id="start-game-btn" style="display: none;">Start Game</button>
+                    <button id="resign-btn">Resign</button>
+                    <button id="new-game-btn">New Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/play.js') }}"></script>
+</body>
+</html> 
