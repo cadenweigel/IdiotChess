@@ -1,6 +1,6 @@
 import random
-from api.player import Player
-from api.board import Board
+from .player import Player
+from .board import Board
 
 class IdiotBot(Player):
     def __init__(self, name: str, color: str, image: str = None):

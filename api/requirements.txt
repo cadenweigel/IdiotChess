@@ -3,3 +3,5 @@ flask
 Flask-SQLAlchemy
 psycopg2-binary
 Flask-Login
+flask_cors
+python-dotenv

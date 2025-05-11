@@ -1,4 +1,4 @@
-from api.board import Board
+from .board import Board
 
 class GameManager:
     def __init__(self):

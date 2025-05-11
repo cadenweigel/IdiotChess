@@ -17,7 +17,7 @@ def create_app():
     login_manager.init_app(app)
     CORS(app)  # Allow frontend on different origin (e.g., React dev server)
 
-    from .api import api
+    from .routes import api
     app.register_blueprint(api, url_prefix="/api")
 
     return app

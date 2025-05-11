@@ -1,14 +1,32 @@
 services:
-  web:
-    build: .
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     volumes:
       - .:/app
     env_file:
-      - .env
+      - ./api/.env
+    environment:
+      - PYTHONPATH=/app
+      - FLASK_APP=api.run
     depends_on:
       - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    stdin_open: true
+    tty: true
+    depends_on:
+      - api
 
   db:
     image: postgres:14

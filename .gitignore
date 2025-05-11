@@ -1,7 +1,35 @@
-__pycache__/
-.venv
-venv
-prompt.txt
-..old/
-.env
+# --- FRONTEND ---
+frontend/node_modules/
+frontend/build/
+frontend/.pnp
+frontend/pnp.js
+frontend/coverage/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# --- BACKEND (API) ---
+api/__pycache__/
+api/instance/
+api/*.pyc
+api/*.pyo
+api/*.pyd
+api/*.sqlite3
+api/*.log
+api/.env
+api/*.db
+api/*.egg-info/
+
+# --- OTHER ---
+pieces/__pycache__/
+utils/__pycache__/
+
+# --- GENERAL ---
+.DS_Store
+.vscode/
+*.egg-info/
 
