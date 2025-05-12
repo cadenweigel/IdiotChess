@@ -1,8 +1,5 @@
-const modeSelect = document.getElementById("mode");
-const vsBotSettings = document.getElementById("vs-bot-settings");
-const botVsBotSettings = document.getElementById("bot-vs-bot-settings");
-
 let botMap = {};
+let selectedBotColor = null;
 
 async function loadBotOptions() {
   try {
@@ -10,112 +7,65 @@ async function loadBotOptions() {
     const data = await res.json();
     const botList = data.bots || [];
 
+    // Create a map of bot IDs to their full information
     botMap = Object.fromEntries(botList.map(bot => [bot.id, bot]));
-
-    const whiteSelect = document.getElementById("white-bot");
-    const blackSelect = document.getElementById("black-bot");
-
-    whiteSelect.innerHTML = "";
-    blackSelect.innerHTML = "";
-
-    botList.forEach(bot => {
-      const option = document.createElement("option");
-      option.value = bot.id;
-      option.textContent = bot.name;
-
-      if (bot.id.startsWith("white_")) whiteSelect.appendChild(option);
-      if (bot.id.startsWith("black_")) blackSelect.appendChild(option);
-    });
-
-    updateBotDescriptions(); // initial description
-    updateVsBotDescription();
-    whiteSelect.addEventListener("change", updateBotDescriptions);
-    blackSelect.addEventListener("change", updateBotDescriptions);
+    
+    // Set initial bot avatars
+    document.getElementById("white-bot-avatar").src = `/static/images/avatars/${botMap["white_idiot"].avatar}`;
+    document.getElementById("black-bot-avatar").src = `/static/images/avatars/${botMap["black_idiot"].avatar}`;
+    
+    // Initially disable the start button
+    document.querySelector('button[type="submit"]').disabled = true;
   } catch (err) {
     console.error("Failed to load bots:", err);
   }
 }
 
-function updateVsBotDescription() {
-  const selected = document.getElementById("bot-choice").value;
-  const id = selected === "white" ? "white_idiot" : "black_idiot";
-  const bot = botMap[id] || {};
-
-  document.getElementById("vs-bot-description").textContent = bot.description || "";
-  document.getElementById("vs-bot-avatar").src = `/static/images/avatars/${bot.avatar || "default.png"}`;
+function selectBot(botCard) {
+  // Remove selection from all cards
+  document.querySelectorAll('.bot-card').forEach(card => {
+    card.classList.remove('selected');
+  });
+  
+  // Add selection to clicked card
+  botCard.classList.add('selected');
+  selectedBotColor = botCard.dataset.botColor;
+  
+  // Enable the start button
+  document.querySelector('button[type="submit"]').disabled = false;
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
   loadBotOptions();
-  document.getElementById("bot-choice").addEventListener("change", updateVsBotDescription);
-});
-
-function updateBotDescriptions() {
-  const whiteId = document.getElementById("white-bot").value;
-  const blackId = document.getElementById("black-bot").value;
-
-  const white = botMap[whiteId] || {};
-  const black = botMap[blackId] || {};
-
-  document.getElementById("white-bot-description").textContent = white.description || "";
-  document.getElementById("black-bot-description").textContent = black.description || "";
-
-  document.getElementById("white-bot-avatar").src = `/static/images/avatars/${white.avatar || "default.png"}`;
-  document.getElementById("black-bot-avatar").src = `/static/images/avatars/${black.avatar || "default.png"}`;
-}
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  loadBotOptions();
-});
-
-modeSelect.addEventListener("change", () => {
-  const mode = modeSelect.value;
-  vsBotSettings.style.display = mode === "vs-bot" ? "block" : "none";
-  botVsBotSettings.style.display = mode === "bot-vs-bot" ? "block" : "none";
+  
+  // Add click handlers to bot cards
+  document.querySelectorAll('.bot-card').forEach(card => {
+    card.addEventListener('click', () => selectBot(card));
+  });
 });
 
 document.getElementById("start-game-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const mode = modeSelect.value;
-
-  let response;
+  
+  if (!selectedBotColor) {
+    alert("Please select a bot to play against");
+    return;
+  }
+  
   try {
-    if (mode === "vs-bot") {
-      const botChoice = document.getElementById("bot-choice");
-      const botColor = botChoice.value;
-      console.log('Selected bot color:', botColor); // Debug log
-      
-      response = await fetch("/api/new-game/bot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bot_color: botColor })
-      });
-      
-      const data = await response.json();
-      if (data.session_id) {
-        const playUrl = `/play?session_id=${data.session_id}&bot_color=${botColor}`;
-        console.log('Redirecting to:', playUrl); // Debug log
-        window.location.href = playUrl;
-      } else {
-        alert("Failed to start game.");
-      }
+    const response = await fetch("/api/new-game/bot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bot_color: selectedBotColor })
+    });
+    
+    const data = await response.json();
+    if (data.session_id) {
+      const playUrl = `/play?session_id=${data.session_id}&bot_color=${selectedBotColor}`;
+      console.log('Redirecting to:', playUrl); // Debug log
+      window.location.href = playUrl;
     } else {
-      const whiteBot = document.getElementById("white-bot").value;
-      const blackBot = document.getElementById("black-bot").value;
-      response = await fetch("/api/new-game/bots", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ white_bot: whiteBot, black_bot: blackBot })
-      });
-      
-      const data = await response.json();
-      if (data.session_id) {
-        window.location.href = `/play?session_id=${data.session_id}`;
-      } else {
-        alert("Failed to start game.");
-      }
+      alert("Failed to start game.");
     }
   } catch (err) {
     console.error("Error starting game:", err);

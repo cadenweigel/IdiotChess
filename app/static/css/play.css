@@ -124,13 +124,17 @@ body {
 }
 
 .piece-image {
-    width: 80%;
-    height: 80%;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    pointer-events: none;
     user-select: none;
-    -webkit-user-select: none;
-    z-index: 1;
+    -webkit-user-drag: element;
+    cursor: grab;
+}
+
+.piece-image.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
 }
 
 .square.white {
@@ -151,6 +155,18 @@ body {
 
 .square.valid-move:hover {
     background-color: rgba(144, 238, 144, 0.9) !important;
+}
+
+.square.drag-over {
+    background-color: rgba(52, 152, 219, 0.3) !important;
+}
+
+.square.drag-over.valid-move {
+    background-color: rgba(46, 204, 113, 0.3) !important;
+}
+
+.square.drag-over:not(.valid-move) {
+    background-color: rgba(231, 76, 60, 0.3) !important;
 }
 
 /* Game Info */

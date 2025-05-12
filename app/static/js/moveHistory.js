@@ -1,4 +1,5 @@
 import { movesList } from './gameState.js';
+import { getBlackBot } from './gameState.js';
 
 // Track move count internally
 let moveCount = 1; // Start at 1
@@ -11,10 +12,40 @@ function scrollMoveHistoryToBottom() {
     }, 50);
 }
 
+function flipCoordsIfHumanBlack([row, col]) {
+    if (getBlackBot && getBlackBot() === 'You') {
+        return [7 - row, 7 - col];
+    }
+    return [row, col];
+}
+
+function positionToAlgebraic(position) {
+    const [rank, file] = position;
+    const fileChar = String.fromCharCode(97 + file);
+    const rankNum = 8 - rank;
+    return `${fileChar}${rankNum}`;
+}
+
 // Add move to history
 function addMoveToHistory(from, to, color) {
-    const fromSquare = document.querySelector(`[data-position="${from.join(',')}"]`).dataset.square;
-    const toSquare = document.querySelector(`[data-position="${to.join(',')}"]`).dataset.square;
+    const fromFlipped = flipCoordsIfHumanBlack(from);
+    const toFlipped = flipCoordsIfHumanBlack(to);
+    const fromElem = document.querySelector(`[data-position="${fromFlipped.join(',')}"]`);
+    const toElem = document.querySelector(`[data-position="${toFlipped.join(',')}"]`);
+    let fromSquare = '??';
+    let toSquare = '??';
+    if (fromElem && fromElem.dataset.square) {
+        fromSquare = fromElem.dataset.square;
+    } else {
+        fromSquare = positionToAlgebraic(fromFlipped);
+        console.warn('Move history: from square not found for', from, fromElem);
+    }
+    if (toElem && toElem.dataset.square) {
+        toSquare = toElem.dataset.square;
+    } else {
+        toSquare = positionToAlgebraic(toFlipped);
+        console.warn('Move history: to square not found for', to, toElem);
+    }
     const moveText = `${fromSquare}${toSquare}`;
 
     // Find or create the move container for this move number

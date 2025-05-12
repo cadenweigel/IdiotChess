@@ -79,7 +79,7 @@ async function makeBotMove() {
 }
 
 // Load bot avatars
-function loadBotAvatars(whiteBot, blackBot) {
+function loadBotAvatars() {
     const whiteAvatar = document.getElementById('white-avatar');
     const blackAvatar = document.getElementById('black-avatar');
     const whiteName = document.getElementById('white-name');
@@ -90,13 +90,11 @@ function loadBotAvatars(whiteBot, blackBot) {
         return;
     }
 
-    // Set white player avatar and name
-    const whiteBotName = whiteBot || 'You';
+    // Always get the latest bot/player names from gameState
+    const whiteBotName = getWhiteBot() || 'You';
+    const blackBotName = getBlackBot() || 'You';
     whiteAvatar.src = whiteBotName === 'You' ? '/static/images/avatars/default_player.png' : `/static/images/avatars/${whiteBotName.toLowerCase()}.png`;
     whiteName.textContent = whiteBotName;
-
-    // Set black player avatar and name
-    const blackBotName = blackBot || 'You';
     blackAvatar.src = blackBotName === 'You' ? '/static/images/avatars/default_player.png' : `/static/images/avatars/${blackBotName.toLowerCase()}.png`;
     blackName.textContent = blackBotName;
 }

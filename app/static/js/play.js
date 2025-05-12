@@ -12,7 +12,8 @@ import {
     getWhiteBot,
     getBlackBot,
     setWhiteBot,
-    setBlackBot
+    setBlackBot,
+    setCurrentPlayerColor
 } from './gameState.js';
 
 // Game state
@@ -350,96 +351,59 @@ startGameBtn.addEventListener('click', async () => {
     }
 });
 
-// Initialize the game
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        // Initialize DOM elements first
-        initializeDOMElements();
-        initializeEventListeners();  // Initialize event listeners after DOM elements are ready
+function positionHumanPlayerAtBottom() {
+    const whitePlayerDiv = document.querySelector('.white-player');
+    const blackPlayerDiv = document.querySelector('.black-player');
+    if (!whitePlayerDiv || !blackPlayerDiv) return;
+    if (getWhiteBot() === 'You') {
+        whitePlayerDiv.style.order = 2;
+        blackPlayerDiv.style.order = 1;
+    } else {
+        whitePlayerDiv.style.order = 1;
+        blackPlayerDiv.style.order = 2;
+    }
+}
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const botColor = urlParams.get('bot_color') || 'black';
-        const existingSessionId = urlParams.get('session_id');
-        console.log('Bot color from URL:', botColor); // Debug log
-        
-        // Set player colors based on bot color first
+function moveHumanPlayerInfoToBottom() {
+    const whitePlayerDiv = document.querySelector('.white-player');
+    const blackPlayerDiv = document.querySelector('.black-player');
+    if (!whitePlayerDiv || !blackPlayerDiv) return;
+    const parent = whitePlayerDiv.parentElement;
+    if (!parent) return;
+    if (getWhiteBot() === 'You') {
+        parent.appendChild(whitePlayerDiv);
+    } else {
+        parent.appendChild(blackPlayerDiv);
+    }
+}
+
+// Initialize the game
+async function initializeGame() {
+    initializeDOMElements();
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    const botColor = urlParams.get('bot_color');
+
+    if (sessionId) {
+        setSessionId(sessionId);
+        // Set bot/player names and current player color based on botColor
         if (botColor === 'white') {
-            setBotColors('Wyatt', 'You');
-            console.log('Playing as black against white bot'); // Debug log
-            // Move black player info to bottom
-            document.getElementById('black-player-info').style.order = '3';
-            document.getElementById('white-player-info').style.order = '1';
+            setBotColors('Wyatt', 'You'); // Bot is white, user is black
+            setCurrentPlayerColor('b');
         } else {
-            setBotColors('You', 'Moose');
-            console.log('Playing as white against black bot'); // Debug log
-            // Move white player info to bottom
-            document.getElementById('white-player-info').style.order = '3';
-            document.getElementById('black-player-info').style.order = '1';
+            setBotColors('You', 'Moose'); // User is white, bot is black
+            setCurrentPlayerColor('w');
         }
-        
-        // If we have an existing session, verify the bot configuration
-        if (existingSessionId) {
-            console.log("Using existing session ID:", existingSessionId);
-            setSessionId(existingSessionId);  // Set session ID immediately
-            sessionId = existingSessionId;
-            
-            // Get current board state to check turn
-            const boardResponse = await fetch(`/api/board?session_id=${existingSessionId}`);
-            const boardData = await boardResponse.json();
-            
-            // Get current bot configuration
-            const currentConfig = {
-                whiteBot: getWhiteBot(),
-                blackBot: getBlackBot()
-            };
-            console.log("Current bot configuration:", currentConfig);
-            
-            // Only update bot configuration if it doesn't match the URL parameters
-            if (botColor === 'white' && currentConfig.whiteBot !== 'Wyatt') {
-                console.log("Updating bot configuration to match URL parameters");
-                setWhiteBot('Wyatt');
-                setBlackBot('You');
-            } else if (botColor === 'black' && currentConfig.blackBot !== 'Moose') {
-                console.log("Updating bot configuration to match URL parameters");
-                setWhiteBot('You');
-                setBlackBot('Moose');
-            }
-        } else {
-            // Start a new game if no session ID exists
-            const response = await fetch('/api/new-game/bot', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bot_color: botColor })
-            });
-            
-            const data = await response.json();
-            if (data.error) {
-                console.error('Failed to start game:', data.error);
-                return;
-            }
-            
-            setSessionId(data.session_id);  // Set session ID immediately
-            sessionId = data.session_id;
-            console.log('Created new session ID:', data.session_id);
-        }
-        
-        // Initialize the board only after we have a valid sessionId
-        loadBotAvatars(getWhiteBot(), getBlackBot());
-        initializeBoard();
-        
-        // Show start game button and overlay for both colors
+        await initializeBoard();
+        await loadBotAvatars();
+        moveHumanPlayerInfoToBottom();
+        positionHumanPlayerAtBottom();
+        initializeEventListeners();
+        // Show start game button and overlay
         startGameBtn.style.display = 'block';
         gameNotStartedOverlay.style.display = 'flex';
-        setGameStarted(false);  // Ensure game is not started initially
-        
-        // Clear move history and reset move count
-        clearMoveHistory();
-        
-        // Update initial turn indicator
-        const initialState = await fetchBoardState();
-        updateTurnIndicator(initialState.turn);
-    } catch (error) {
-        console.error('Error during initialization:', error);
-        updateStatus('Error initializing game. Please refresh the page.');
+        setGameStarted(false);
     }
-});
+}
+
+document.addEventListener('DOMContentLoaded', initializeGame);

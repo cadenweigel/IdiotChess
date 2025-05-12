@@ -6,6 +6,7 @@ let whiteBot = null;
 let blackBot = null;
 let gameStarted = false;
 let moveCount = 0;
+let currentPlayerColor = null;  // Add this for drag and drop validation
 
 // DOM Elements
 let board;
@@ -103,6 +104,16 @@ export function getSelectedSquare() {
 // Setter functions
 export function setSelectedSquare(square) {
     selectedSquare = square;
+}
+
+// Set current player color
+export function setCurrentPlayerColor(color) {
+    currentPlayerColor = color;
+}
+
+// Get current player color
+export function getCurrentPlayerColor() {
+    return currentPlayerColor;
 }
 
 // Export variables

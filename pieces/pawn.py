@@ -44,7 +44,6 @@ class Pawn(Piece):
         if hasattr(board, "last_move") and board.last_move:
             last_from, last_to = board.last_move
             last_piece = board.get_piece_at(last_to)
-            print(f"[EN PASSANT DEBUG] Pawn at {self.position}, color={self.color}, last_from={last_from}, last_to={last_to}, last_piece={last_piece}")
             if (
                 isinstance(last_piece, Pawn) and
                 last_piece.color != self.color and
@@ -53,11 +52,8 @@ class Pawn(Piece):
                 abs(last_to[1] - col) == 1  # adjacent column
             ):
                 en_passant_target = (row + direction, last_to[1])
-                print(f"[EN PASSANT DEBUG] En passant available for {self.color} pawn at {self.position} to {en_passant_target}")
                 if board.is_within_bounds(en_passant_target):
                     moves.append(en_passant_target)
-            else:
-                print(f"[EN PASSANT DEBUG] En passant NOT available for {self.color} pawn at {self.position}")
 
         return moves
 

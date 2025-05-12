@@ -4,7 +4,8 @@ import {
     updateTurnIndicator, 
     getSessionId, 
     statusMessage,
-    getBlackBot
+    getBlackBot,
+    getWhiteBot
 } from './gameState.js';
 import { handleSquareClick } from './eventHandlers.js';
 
@@ -23,8 +24,8 @@ function positionToAlgebraic(position) {
     return `${fileChar}${rankNum}`;
 }
 
-// Get piece image for a piece
-function getPieceImage(piece) {
+// Get piece image URL for a piece
+function getPieceImageUrl(piece) {
     const color = piece.color === 'w' ? 'white' : 'black';
     const type = piece.type;
     const pieceNames = {
@@ -35,10 +36,10 @@ function getPieceImage(piece) {
         'q': 'queen',
         'k': 'king'
     };
-    return `<img src="static/images/pieces/${color}_${pieceNames[type]}.png" alt="${color} ${type}" class="piece-image">`;
+    return `static/images/pieces/${color}_${pieceNames[type]}.png`;
 }
 
-// Update the board display
+// Update the board display (click-to-move only)
 async function updateBoard() {
     const currentSessionId = getSessionId();
     if (!currentSessionId) {
@@ -54,17 +55,41 @@ async function updateBoard() {
         return;
     }
 
-    const isBlackPlayer = getBlackBot() === 'You';
+    // Human is white if getWhiteBot() === 'You', black if getBlackBot() === 'You'
+    const humanIsWhite = typeof getWhiteBot === 'function' && getWhiteBot() === 'You';
+    const humanIsBlack = typeof getBlackBot === 'function' && getBlackBot() === 'You';
+    let ranks, files;
+    if (humanIsBlack) {
+        ranks = [7, 6, 5, 4, 3, 2, 1, 0];
+        files = [0, 1, 2, 3, 4, 5, 6, 7];
+    } else {
+        ranks = [0, 1, 2, 3, 4, 5, 6, 7];
+        files = [7, 6, 5, 4, 3, 2, 1, 0];
+    }
+    const chessboard = document.getElementById('chessboard');
+    chessboard.innerHTML = '';
     
-    // Update board state
-    for (let rank = 0; rank < 8; rank++) {
-        for (let file = 0; file < 8; file++) {
-            // Convert backend position to frontend position
-            const frontendRank = isBlackPlayer ? rank : 7 - rank;
-            const frontendFile = isBlackPlayer ? 7 - file : file;
-            const square = document.querySelector(`[data-position="${rank},${file}"]`);
+    for (let visualRank = 0; visualRank < 8; visualRank++) {
+        for (let visualFile = 0; visualFile < 8; visualFile++) {
+            const rank = ranks[visualRank];
+            const file = files[visualFile];
+            const square = document.createElement('div');
+            square.className = `square ${(visualRank + visualFile) % 2 === 0 ? 'white' : 'black'}`;
+            square.dataset.row = rank;
+            square.dataset.col = file;
+            square.dataset.position = `${rank},${file}`;
+            square.dataset.square = positionToAlgebraic([rank, file]);
+            square.addEventListener('click', handleSquareClick);
+
             const piece = data.board[rank][file];
-            square.innerHTML = piece ? getPieceImage({ color: piece[0] === piece[0].toUpperCase() ? 'w' : 'b', type: piece.toLowerCase() }) : '';
+            if (piece) {
+                const pieceImage = document.createElement('img');
+                pieceImage.src = getPieceImageUrl({ color: piece[0] === piece[0].toUpperCase() ? 'w' : 'b', type: piece.toLowerCase() });
+                pieceImage.className = 'piece-image';
+                square.appendChild(pieceImage);
+            }
+            
+            chessboard.appendChild(square);
         }
     }
 
@@ -76,29 +101,29 @@ async function updateBoard() {
 // Initialize the board
 function initializeBoard() {
     board.innerHTML = '';
-    const isBlackPlayer = getBlackBot() === 'You';
-    
-    // If playing as black, we'll create the board in reverse order
-    const ranks = isBlackPlayer ? [0, 1, 2, 3, 4, 5, 6, 7] : [7, 6, 5, 4, 3, 2, 1, 0];
-    const files = isBlackPlayer ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
-    
+    const humanIsBlack = typeof getBlackBot === 'function' && getBlackBot() === 'You';
+    let ranks, files;
+    if (humanIsBlack) {
+        ranks = [7, 6, 5, 4, 3, 2, 1, 0];
+        files = [0, 1, 2, 3, 4, 5, 6, 7];
+    } else {
+        ranks = [0, 1, 2, 3, 4, 5, 6, 7];
+        files = [7, 6, 5, 4, 3, 2, 1, 0];
+    }
     for (let visualRank = 0; visualRank < 8; visualRank++) {
         for (let visualFile = 0; visualFile < 8; visualFile++) {
             const rank = ranks[visualRank];
             const file = files[visualFile];
             const square = document.createElement('div');
-            // Standard chessboard coloring: (visualRank + visualFile) % 2 === 0 is white
             const isWhiteSquare = (visualRank + visualFile) % 2 === 0;
             square.className = `square ${isWhiteSquare ? 'white' : 'black'}`;
             const algebraic = `${String.fromCharCode(97 + file)}${rank + 1}`;
             square.dataset.square = algebraic;
-            // Store backend position format (row, col) where row is 0-7 from top to bottom
-            square.dataset.position = `${7-rank},${file}`;
+            square.dataset.position = `${rank},${file}`;
             square.addEventListener('click', handleSquareClick);
             board.appendChild(square);
         }
     }
-    
     // Wait for session ID to be set before updating board
     const checkSessionId = setInterval(() => {
         const currentSessionId = getSessionId();
@@ -135,7 +160,7 @@ function clearHighlights() {
 export {
     algebraicToPosition,
     positionToAlgebraic,
-    getPieceImage,
+    getPieceImageUrl,
     updateBoard,
     initializeBoard,
     highlightSquare,
