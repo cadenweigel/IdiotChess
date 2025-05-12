@@ -13,7 +13,7 @@ import {
     updateStatus,
     setGameStarted
 } from './gameState.js';
-import { updateBoard, clearHighlights, highlightSquare, highlightValidMoves } from './boardUI.js';
+import { updateBoard, clearHighlights, highlightSquare, highlightValidMoves, lastMove } from './boardUI.js';
 import { addMoveToHistory } from './moveHistory.js';
 import { makeBotMove } from './botManager.js';
 
@@ -78,6 +78,10 @@ async function handleSquareClick(event) {
 
         const result = await moveResponse.json();
         if (result.success) {
+            // Set lastMove for animation
+            lastMove.from = fromPos;
+            lastMove.to = position;
+            lastMove.piece = currentState.board[fromPos[0]][fromPos[1]];
             await updateBoard();
             updateStatus(result.status);
             addMoveToHistory(fromPos, position, currentState.turn);
@@ -89,6 +93,8 @@ async function handleSquareClick(event) {
                 await makeBotMove();
             }
         } else {
+            // Display the error message to the user
+            updateStatus(result.error || 'Invalid move');
             setSelectedSquare(null);
         }
     } else {

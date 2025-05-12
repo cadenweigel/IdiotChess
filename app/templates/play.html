@@ -17,11 +17,16 @@
         </div>
 
         <div class="game-container">
+            <div class="move-history">
+                <h3>Move History</h3>
+                <div id="moves-list"></div>
+            </div>
+
             <div class="board-container">
                 <div id="chessboard"></div>
                 <div id="game-not-started-overlay" class="overlay">
                     <div class="overlay-content">
-                        <p>Click "Start Game" to begin</p>
+                        <button id="start-game-btn" class="overlay-button">Start Game</button>
                     </div>
                 </div>
                 <div id="game-over-overlay" class="overlay" style="display: none;">
@@ -41,11 +46,6 @@
                     </div>
                 </div>
 
-                <div class="move-history">
-                    <h3>Move History</h3>
-                    <div id="moves-list"></div>
-                </div>
-
                 <div id="black-player-info" class="player-info black-player">
                     <img id="black-avatar" class="player-avatar" alt="Black player avatar" />
                     <div class="player-details">
@@ -54,7 +54,6 @@
                 </div>
 
                 <div class="game-controls">
-                    <button id="start-game-btn" style="display: none;">Start Game</button>
                     <button id="resign-btn">Resign</button>
                     <button id="new-game-btn">New Game</button>
                 </div>

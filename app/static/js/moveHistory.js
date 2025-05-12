@@ -61,17 +61,26 @@ function addMoveToHistory(from, to, color) {
         moveNumber.textContent = `${moveCount}.`;
         moveContainer.appendChild(moveNumber);
 
-        // White move
+        // White move (always create)
         const whiteMove = document.createElement('span');
         whiteMove.className = 'move-text white-move';
         moveContainer.appendChild(whiteMove);
 
-        // Black move
-        const blackMove = document.createElement('span');
-        blackMove.className = 'move-text black-move';
-        moveContainer.appendChild(blackMove);
+        // Only create black move if this is a black move
+        if (color === 'black') {
+            const blackMove = document.createElement('span');
+            blackMove.className = 'move-text black-move';
+            moveContainer.appendChild(blackMove);
+        }
 
         movesList.appendChild(moveContainer);
+    } else {
+        // If this is a black move and the black-move element doesn't exist yet, create it
+        if (color === 'black' && !moveContainer.querySelector('.black-move')) {
+            const blackMove = document.createElement('span');
+            blackMove.className = 'move-text black-move';
+            moveContainer.appendChild(blackMove);
+        }
     }
 
     // Update the correct move

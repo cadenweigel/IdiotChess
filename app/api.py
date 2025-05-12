@@ -1,14 +1,17 @@
 import uuid
+import copy
+import random
 from flask import Blueprint, jsonify, current_app, render_template, request
 from app.game import GameManager
 from app.player import HumanPlayer
-from app.bots import IdiotBot, WhiteIdiotBot, BlackIdiotBot
+from app.bots import IdiotBot, WhiteIdiotBot, BlackIdiotBot, GreedyBot
 
 api = Blueprint("api", __name__)
 
 BOT_REGISTRY = {
     "white_idiot": WhiteIdiotBot,
     "black_idiot": BlackIdiotBot,
+    "pongo": GreedyBot,
     # Add others here
 }
 
@@ -23,15 +26,37 @@ def play():
 @api.route("/api/new-game/bot", methods=["POST"])
 def new_game_vs_bot():
     data = request.get_json()
-    bot_color = data.get("bot_color", "black")  # default to black bot
+    bot_type = data.get("bot_type", "black_idiot")
+    player_color = data.get("player_color", "random")
+    
+    # For Pongo or when player chooses random, randomly choose the color
+    if bot_type == "pongo" or player_color == "random":
+        bot_color = random.choice(["white", "black"])
+    else:
+        # For fixed-color bots or when player has a preference
+        if bot_type == "white_idiot":
+            bot_color = "white"
+        elif bot_type == "black_idiot":
+            bot_color = "black"
+        else:
+            # For Pongo when player has a color preference
+            bot_color = "black" if player_color == "white" else "white"
+    
     print(f"Creating new game with bot color: {bot_color}")
 
     session_id = str(uuid.uuid4())
     manager = GameManager()
 
+    bot_cls = BOT_REGISTRY.get(bot_type)
+    if not bot_cls:
+        return jsonify({"error": "Invalid bot type"}), 400
+
     if bot_color == "white":
         print("Setting up white bot vs human")
-        white_bot = WhiteIdiotBot()
+        if bot_type == "pongo":
+            white_bot = bot_cls(name="Pongo", color="white")
+        else:
+            white_bot = bot_cls()
         black_player = HumanPlayer(name="You", color="black")
         print(f"White bot: {white_bot}")
         print(f"Black player: {black_player}")
@@ -39,7 +64,10 @@ def new_game_vs_bot():
     elif bot_color == "black":
         print("Setting up human vs black bot")
         white_player = HumanPlayer(name="You", color="white")
-        black_bot = BlackIdiotBot()
+        if bot_type == "pongo":
+            black_bot = bot_cls(name="Pongo", color="black")
+        else:
+            black_bot = bot_cls()
         print(f"White player: {white_player}")
         print(f"Black bot: {black_bot}")
         manager.set_players(white_player, black_bot)
@@ -50,7 +78,7 @@ def new_game_vs_bot():
     print(f"White player: {manager.players['white']}")
     print(f"Black player: {manager.players['black']}")
     
-    return jsonify({"session_id": session_id})
+    return jsonify({"session_id": session_id, "bot_color": bot_color})
 
 @api.route("/api/new-game/bots", methods=["POST"])
 def new_game_bots_only():
@@ -80,10 +108,8 @@ def get_available_bots():
     return jsonify({
         "bots": [
             {"id": "white_idiot", "name": "Wyatt", "description": "Picks a random legal move. Plays white.", "avatar": "wyatt.png"},
-            {"id": "black_idiot", "name": "Moose", "description": "Picks a random legal move. Plays black.", "avatar": "moose.png"}
-            # later you can add more like:
-            # {"id": "minimax", "name": "MinimaxBot"},
-            # {"id": "chaotic", "name": "ChaoticBot"},
+            {"id": "black_idiot", "name": "Moose", "description": "Picks a random legal move. Plays black.", "avatar": "moose.png"},
+            {"id": "pongo", "name": "Pongo", "description": "Picks the best move by piece value.", "avatar": "pongo.png"}
         ]
     })
 
@@ -119,6 +145,31 @@ def make_move():
     if not manager:
         return jsonify({"error": "Invalid session ID"}), 400
     print(f"from_pos = {from_pos}, to_pos = {to_pos}, type(from_pos) = {type(from_pos)}")
+    
+    # Get the piece being moved
+    piece = manager.board.get_piece_at(from_pos)
+    if not piece:
+        return jsonify({"error": "No piece at selected position"}), 400
+    
+    # Check if it's the player's turn
+    if piece.color != manager.current_turn:
+        return jsonify({"error": "Not your turn"}), 400
+    
+    # Check if the move is in the piece's valid moves
+    if to_pos not in piece.get_valid_moves(manager.board):
+        return jsonify({"error": "Invalid move for this piece"}), 400
+    
+    # Check if the move would leave the king in check
+    test_board = copy.deepcopy(manager.board)
+    if test_board.move_piece(from_pos, to_pos, validate=False) and test_board.is_in_check(piece.color):
+        return jsonify({"error": "This move would leave your king in check"}), 400
+    
+    # If we're in check, verify this move gets us out of check
+    if manager.board.is_in_check(piece.color):
+        test_board = copy.deepcopy(manager.board)
+        if not test_board.move_piece(from_pos, to_pos, validate=False) or test_board.is_in_check(piece.color):
+            return jsonify({"error": "You must move out of check"}), 400
+    
     success = manager.make_move(from_pos, to_pos)
     if not success:
         return jsonify({"error": "Invalid move"}), 400
@@ -181,14 +232,18 @@ def bot_move():
         else:
             from_pos = move.from_pos
             to_pos = move.to_pos
-            
+        
         print(f"Bot move: from {from_pos} to {to_pos}")
-            
+        
+        # Get the piece symbol before making the move
+        piece_obj = manager.board.get_piece_at(from_pos)
+        piece_symbol = piece_obj.symbol() if piece_obj else None
+        
         # Make the move by passing from_pos and to_pos separately
         success = manager.make_move(from_pos, to_pos)
         if not success:
             return jsonify({'error': 'Invalid move'}), 400
-            
+        
         # Get the updated board state
         board_state = []
         for row in manager.board.grid:
@@ -201,7 +256,8 @@ def bot_move():
             'success': True,
             'move': {
                 'from': [from_pos[0], from_pos[1]],
-                'to': [to_pos[0], to_pos[1]]
+                'to': [to_pos[0], to_pos[1]],
+                'piece': piece_symbol
             },
             'board': board_state,
             'status': manager.get_game_status()

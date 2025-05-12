@@ -4,7 +4,7 @@ import {
     getBlackBot, 
     updateStatus 
 } from './gameState.js';
-import { updateBoard } from './boardUI.js';
+import { updateBoard, lastMove } from './boardUI.js';
 import { addMoveToHistory } from './moveHistory.js';
 import { fetchBoardState } from './eventHandlers.js';
 
@@ -59,6 +59,12 @@ async function makeBotMove() {
 
         const moveData = await moveResponse.json();
         if (moveData.success) {
+            // Set lastMove for animation if move data is available
+            if (moveData.move && moveData.move.from && moveData.move.to && moveData.move.piece) {
+                lastMove.from = moveData.move.from;
+                lastMove.to = moveData.move.to;
+                lastMove.piece = moveData.move.piece;
+            }
             // Update the board with the new state
             await updateBoard();
             updateStatus(moveData.status);
@@ -93,9 +99,24 @@ function loadBotAvatars() {
     // Always get the latest bot/player names from gameState
     const whiteBotName = getWhiteBot() || 'You';
     const blackBotName = getBlackBot() || 'You';
-    whiteAvatar.src = whiteBotName === 'You' ? '/static/images/avatars/default_player.png' : `/static/images/avatars/${whiteBotName.toLowerCase()}.png`;
+
+    // Handle avatar loading
+    if (whiteBotName === 'You') {
+        whiteAvatar.src = '/static/images/avatars/default_player.png';
+    } else if (whiteBotName === 'Pongo') {
+        whiteAvatar.src = '/static/images/avatars/pongo.png';
+    } else {
+        whiteAvatar.src = `/static/images/avatars/${whiteBotName.toLowerCase()}.png`;
+    }
     whiteName.textContent = whiteBotName;
-    blackAvatar.src = blackBotName === 'You' ? '/static/images/avatars/default_player.png' : `/static/images/avatars/${blackBotName.toLowerCase()}.png`;
+
+    if (blackBotName === 'You') {
+        blackAvatar.src = '/static/images/avatars/default_player.png';
+    } else if (blackBotName === 'Pongo') {
+        blackAvatar.src = '/static/images/avatars/pongo.png';
+    } else {
+        blackAvatar.src = `/static/images/avatars/${blackBotName.toLowerCase()}.png`;
+    }
     blackName.textContent = blackBotName;
 }
 

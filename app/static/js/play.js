@@ -377,33 +377,60 @@ function moveHumanPlayerInfoToBottom() {
     }
 }
 
-// Initialize the game
+// Initialize game
 async function initializeGame() {
-    initializeDOMElements();
+    // Get session ID and bot color from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
     const botColor = urlParams.get('bot_color');
-
-    if (sessionId) {
-        setSessionId(sessionId);
-        // Set bot/player names and current player color based on botColor
-        if (botColor === 'white') {
-            setBotColors('Wyatt', 'You'); // Bot is white, user is black
-            setCurrentPlayerColor('b');
-        } else {
-            setBotColors('You', 'Moose'); // User is white, bot is black
-            setCurrentPlayerColor('w');
-        }
-        await initializeBoard();
-        await loadBotAvatars();
-        moveHumanPlayerInfoToBottom();
-        positionHumanPlayerAtBottom();
-        initializeEventListeners();
-        // Show start game button and overlay
-        startGameBtn.style.display = 'block';
-        gameNotStartedOverlay.style.display = 'flex';
-        setGameStarted(false);
+    const botType = urlParams.get('bot_type');
+    
+    if (!sessionId) {
+        console.error('No session ID provided');
+        return;
     }
+    
+    // Initialize game state
+    setSessionId(sessionId);
+    
+    // Get initial board state to determine bot names
+    const response = await fetch(`/api/board?session_id=${sessionId}`);
+    const data = await response.json();
+    
+    // Initialize DOM elements first
+    initializeDOMElements();
+    
+    // Get the correct bot name based on bot type
+    let botName;
+    if (botType === 'white_idiot') {
+        botName = 'Wyatt';
+    } else if (botType === 'black_idiot') {
+        botName = 'Moose';
+    } else {
+        botName = 'Pongo';
+    }
+    
+    // Set bot colors based on the bot color parameter
+    if (botColor === 'white') {
+        setWhiteBot(botName);
+        setBlackBot('You');
+    } else {
+        setWhiteBot('You');
+        setBlackBot(botName);
+    }
+    
+    // Initialize board UI and event listeners after DOM elements are ready
+    initializeBoard();
+    initializeEventListeners();
+    
+    // Load bot avatars and update the board
+    loadBotAvatars();
+    await updateBoardDisplay();
+    
+    // Always show the start button and overlay initially
+    startGameBtn.style.display = 'block';
+    gameNotStartedOverlay.style.display = 'flex';
 }
 
+// Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', initializeGame);

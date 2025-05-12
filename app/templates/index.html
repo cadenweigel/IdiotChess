@@ -10,10 +10,26 @@
 <body>
   <div class="container">
     <h1>Welcome to IdiotChess!</h1>
+    <p>Choose your color and a bot to play against</p>
 
     <form id="start-game-form">
+      <div class="color-selection">
+        <div class="color-option" data-color="white">
+          <div class="color-icon white"></div>
+          <span>White</span>
+        </div>
+        <div class="color-option" data-color="random">
+          <div class="color-icon random"></div>
+          <span>Random</span>
+        </div>
+        <div class="color-option" data-color="black">
+          <div class="color-icon black"></div>
+          <span>Black</span>
+        </div>
+      </div>
+
       <div class="bot-selection">
-        <div class="bot-card" data-bot-color="white">
+        <div class="bot-card" data-bot-color="white" data-bot-type="white_idiot">
           <div class="bot-avatar-container">
             <img id="white-bot-avatar" class="bot-avatar" alt="Wyatt avatar" />
           </div>
@@ -21,12 +37,20 @@
           <p class="bot-description">Picks a random legal move. Plays white.</p>
         </div>
 
-        <div class="bot-card" data-bot-color="black">
+        <div class="bot-card" data-bot-color="black" data-bot-type="black_idiot">
           <div class="bot-avatar-container">
             <img id="black-bot-avatar" class="bot-avatar" alt="Moose avatar" />
           </div>
           <h3>Moose</h3>
           <p class="bot-description">Picks a random legal move. Plays black.</p>
+        </div>
+
+        <div class="bot-card" data-bot-type="pongo">
+          <div class="bot-avatar-container">
+            <img id="pongo-bot-avatar" class="bot-avatar" alt="Pongo avatar" />
+          </div>
+          <h3>Pongo</h3>
+          <p class="bot-description">Picks the best move by piece value.</p>
         </div>
       </div>
 
