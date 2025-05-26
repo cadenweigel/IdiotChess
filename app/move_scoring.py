@@ -46,6 +46,33 @@ def score_move_by_piece_value(board: Board, from_pos: tuple, to_pos: tuple, colo
     # - Control of open files
     # - Piece mobility
 
+def evaluate_move(board: Board, from_pos: tuple, to_pos: tuple, color: str) -> float:
+    """
+    Evaluate a move based on piece values and position.
+    
+    Args:
+        board: Current board state
+        from_pos: Starting position
+        to_pos: Target position
+        color: Color of the moving player
+        
+    Returns:
+        float: Move score (higher is better)
+    """
+    score = 0
+    
+    # Score captures
+    target_piece = board.get_piece_at(to_pos)
+    if target_piece:
+        piece_type = target_piece.__class__.__name__.lower()
+        score += PIECE_VALUES.get(piece_type, 0)
+    
+    # Bonus for moving pieces to center squares
+    center_distance = abs(3.5 - to_pos[0]) + abs(3.5 - to_pos[1])
+    score += (4 - center_distance) * 0.1
+    
+    return score
+
 def find_best_greedy_move(board: Board, color: str) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
     """
     Find the best move using greedy search based on piece values and captures.
@@ -76,7 +103,7 @@ def find_best_greedy_move(board: Board, color: str) -> Optional[Tuple[Tuple[int,
                         if board.is_in_check(color):
                             if test_board.is_in_check(color):
                                 continue  # Skip this move as it doesn't get us out of check
-                        score = score_move_by_piece_value(board, (row, col), move, color)
+                        score = evaluate_move(board, (row, col), move, color)
                         if score > best_score:
                             best_score = score
                             best_moves = [((row, col), move)]

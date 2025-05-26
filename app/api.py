@@ -42,7 +42,7 @@ def new_game_vs_bot():
         elif bot_type == "black_idiot":
             bot_color = "black"
         else:
-            # For Pongo when player has a color preference
+            # For other bots when player has a color preference
             bot_color = "black" if player_color == "white" else "white"
     
     print(f"Creating new game with bot color: {bot_color}")
@@ -54,34 +54,32 @@ def new_game_vs_bot():
     if not bot_cls:
         return jsonify({"error": "Invalid bot type"}), 400
 
-    if bot_color == "white":
-        print("Setting up white bot vs human")
-        if bot_type == "pongo":
-            white_bot = bot_cls(name="Pongo", color="white")
+    try:
+        if bot_color == "white":
+            print("Setting up white bot vs human")
+            white_bot = bot_cls(name=bot_cls.__name__, color="white")
+            black_player = HumanPlayer(name="You", color="black")
+            print(f"White bot: {white_bot}")
+            print(f"Black player: {black_player}")
+            manager.set_players(white_bot, black_player)
         else:
-            white_bot = bot_cls()
-        black_player = HumanPlayer(name="You", color="black")
-        print(f"White bot: {white_bot}")
-        print(f"Black player: {black_player}")
-        manager.set_players(white_bot, black_player)
-    elif bot_color == "black":
-        print("Setting up human vs black bot")
-        white_player = HumanPlayer(name="You", color="white")
-        if bot_type == "pongo":
-            black_bot = bot_cls(name="Pongo", color="black")
-        else:
-            black_bot = bot_cls()
-        print(f"White player: {white_player}")
-        print(f"Black bot: {black_bot}")
-        manager.set_players(white_player, black_bot)
+            print("Setting up human vs black bot")
+            white_player = HumanPlayer(name="You", color="white")
+            black_bot = bot_cls(name=bot_cls.__name__, color="black")
+            print(f"White player: {white_player}")
+            print(f"Black bot: {black_bot}")
+            manager.set_players(white_player, black_bot)
 
-    current_app.config["games"][session_id] = manager
-    print(f"Game created with session ID: {session_id}")
-    print(f"Initial turn: {manager.current_turn}")
-    print(f"White player: {manager.players['white']}")
-    print(f"Black player: {manager.players['black']}")
-    
-    return jsonify({"session_id": session_id, "bot_color": bot_color})
+        current_app.config["games"][session_id] = manager
+        print(f"Game created with session ID: {session_id}")
+        print(f"Initial turn: {manager.current_turn}")
+        print(f"White player: {manager.players['white']}")
+        print(f"Black player: {manager.players['black']}")
+        
+        return jsonify({"session_id": session_id, "bot_color": bot_color})
+    except Exception as e:
+        print(f"Error creating game: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @api.route("/api/new-game/bots", methods=["POST"])
 def new_game_bots_only():
@@ -215,35 +213,38 @@ def make_move():
 @api.route("/api/bot-move", methods=["POST"])
 def bot_move():
     """Make a move for the current bot player"""
-    data = request.get_json()
-    session_id = data.get('session_id')
-    bot_color = data.get('bot_color')  # Get the bot color from the request
-    
-    if not session_id:
-        return jsonify({'error': 'Missing session ID'}), 400
-        
-    manager = current_app.config["games"].get(session_id)
-    if not manager:
-        return jsonify({'error': 'Invalid session ID'}), 400
-        
-    player = manager.get_current_player()
-    print(f"Current turn: {manager.current_turn}")
-    print(f"Current player: {player}")
-    print(f"Player color: {player.color}")
-    print(f"Requested bot color: {bot_color}")
-    
-    # Check if the current player is a bot
-    if not hasattr(player, 'decide_move'):
-        return jsonify({'error': 'Current player is human, not a bot'}), 400
-        
-    # Verify the bot color matches the current player's color
-    if bot_color and player.color != bot_color:
-        print(f"Bot color mismatch: Expected {bot_color}, got {player.color}")
-        print(f"Current turn: {manager.current_turn}")
-        print(f"Player type: {type(player)}")
-        return jsonify({'error': f'Bot color mismatch. Expected {bot_color}, got {player.color}'}), 400
-    
     try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data received'}), 400
+            
+        session_id = data.get('session_id')
+        bot_color = data.get('bot_color')
+        
+        if not session_id:
+            return jsonify({'error': 'Missing session ID'}), 400
+            
+        manager = current_app.config["games"].get(session_id)
+        if not manager:
+            return jsonify({'error': 'Invalid session ID'}), 400
+            
+        player = manager.get_current_player()
+        print(f"Current turn: {manager.current_turn}")
+        print(f"Current player: {player}")
+        print(f"Player color: {player.color}")
+        print(f"Requested bot color: {bot_color}")
+        
+        # Check if the current player is a bot
+        if not hasattr(player, 'decide_move'):
+            return jsonify({'error': 'Current player is human, not a bot'}), 400
+            
+        # Verify the bot color matches the current player's color
+        if bot_color and player.color != bot_color:
+            print(f"Bot color mismatch: Expected {bot_color}, got {player.color}")
+            print(f"Current turn: {manager.current_turn}")
+            print(f"Player type: {type(player)}")
+            return jsonify({'error': f'Bot color mismatch. Expected {bot_color}, got {player.color}'}), 400
+        
         # Get the bot's move using the board directly
         move = player.decide_move(manager.board)
         
@@ -269,7 +270,10 @@ def bot_move():
         
         # Get the piece symbol before making the move
         piece_obj = manager.board.get_piece_at(from_pos)
-        piece_symbol = piece_obj.symbol() if piece_obj else None
+        if not piece_obj:
+            return jsonify({'error': 'No piece found at move source position'}), 400
+            
+        piece_symbol = piece_obj.symbol()
         
         # Make the move by passing from_pos and to_pos separately
         success = manager.make_move(from_pos, to_pos)
@@ -281,8 +285,14 @@ def bot_move():
         for row in manager.board.grid:
             row_data = []
             for piece in row:
-                row_data.append(piece.symbol() if piece else None)
+                if piece is None:
+                    row_data.append(None)
+                else:
+                    row_data.append(piece.symbol())
             board_state.append(row_data)
+        
+        # Get captured pieces
+        captured_pieces = manager.board.get_captured_pieces_unicode()
         
         return jsonify({
             'success': True,
@@ -292,12 +302,17 @@ def bot_move():
                 'piece': piece_symbol
             },
             'board': board_state,
-            'status': manager.get_game_status()
+            'turn': manager.current_turn,
+            'status': manager.get_game_status(),
+            'captured_by_white': captured_pieces['captured_by_white'],
+            'captured_by_black': captured_pieces['captured_by_black']
         })
         
     except Exception as e:
         print(f"Error in bot_move: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @api.route("/api/valid-moves", methods=["GET"])
 def get_valid_moves():

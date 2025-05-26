@@ -1,5 +1,5 @@
 from app.board import Board
-from app.move_scoring import score_move_by_piece_value
+from app.move_scoring import score_move_by_piece_value, PIECE_VALUES
 
 # Piece-square tables for positional evaluation
 PAWN_PST = [
@@ -141,7 +141,7 @@ def evaluate_material_and_position(board, color):
         for col in range(8):
             piece = board.get_piece_at((row, col))
             if piece:
-                value = score_move_by_piece_value(board, (row, col), (row, col), color)
+                value = PIECE_VALUES.get(piece.__class__.__name__.lower(), 0)
                 pst_value = get_piece_square_value(piece, (row, col))
                 if piece.color == color:
                     score += value + pst_value
@@ -149,16 +149,96 @@ def evaluate_material_and_position(board, color):
                     score -= value + pst_value
     return score
 
-def evaluate_position_mobility(board, color):
-    """Evaluate position using material, piece-square tables, and mobility."""
-    score = evaluate_material_and_position(board, color)
-    mobility = evaluate_mobility(board, color) - evaluate_mobility(board, 'black' if color == 'white' else 'white')
-    score += mobility * 0.1
+def evaluate_position_mobility(board: Board, color: str) -> float:
+    """
+    Evaluate a position based on piece mobility and material.
+    
+    Args:
+        board: Current board state
+        color: Color of the player to evaluate for
+        
+    Returns:
+        float: Position score (higher is better for the given color)
+    """
+    score = 0
+    opponent_color = 'black' if color == 'white' else 'white'
+    
+    # Material score
+    for row in range(8):
+        for col in range(8):
+            piece = board.get_piece_at((row, col))
+            if piece:
+                value = PIECE_VALUES.get(piece.__class__.__name__.lower(), 0)
+                if piece.color == color:
+                    score += value
+                else:
+                    score -= value
+    
+    # Mobility score
+    mobility = 0
+    opponent_mobility = 0
+    
+    for row in range(8):
+        for col in range(8):
+            piece = board.get_piece_at((row, col))
+            if piece:
+                moves = piece.get_valid_moves(board)
+                if piece.color == color:
+                    mobility += len(moves)
+                else:
+                    opponent_mobility += len(moves)
+    
+    # Combine material and mobility scores
+    score += (mobility - opponent_mobility) * 0.1
+    
     return score
 
-def evaluate_position_safety(board, color):
-    """Evaluate position using material, piece-square tables, and king safety."""
-    score = evaluate_material_and_position(board, color)
-    king_safety = evaluate_king_safety(board, color) - evaluate_king_safety(board, 'black' if color == 'white' else 'white')
-    score += king_safety * 2
+def evaluate_position_safety(board: Board, color: str) -> float:
+    """
+    Evaluate a position based on king safety and material.
+    
+    Args:
+        board: Current board state
+        color: Color of the player to evaluate for
+        
+    Returns:
+        float: Position score (higher is better for the given color)
+    """
+    score = 0
+    opponent_color = 'black' if color == 'white' else 'white'
+    
+    # Material score
+    for row in range(8):
+        for col in range(8):
+            piece = board.get_piece_at((row, col))
+            if piece:
+                value = PIECE_VALUES.get(piece.__class__.__name__.lower(), 0)
+                if piece.color == color:
+                    score += value
+                else:
+                    score -= value
+    
+    # King safety score
+    king_safety = 0
+    opponent_king_safety = 0
+    
+    # Find kings
+    for row in range(8):
+        for col in range(8):
+            piece = board.get_piece_at((row, col))
+            if piece and piece.__class__.__name__.lower() == 'king':
+                # Count pieces defending the king's area
+                for dr in [-1, 0, 1]:
+                    for dc in [-1, 0, 1]:
+                        if 0 <= row + dr < 8 and 0 <= col + dc < 8:
+                            defender = board.get_piece_at((row + dr, col + dc))
+                            if defender and defender.color == piece.color:
+                                if piece.color == color:
+                                    king_safety += 1
+                                else:
+                                    opponent_king_safety += 1
+    
+    # Combine material and safety scores
+    score += (king_safety - opponent_king_safety) * 0.5
+    
     return score 

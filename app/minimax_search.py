@@ -97,7 +97,8 @@ def find_best_move(
                         if board.is_in_check(color) and test_board.is_in_check(color):
                             continue
                         
-                        score = minimax_search(test_board, depth, color, evaluate_position, alpha, beta, False)
+                        # Use minimax search to evaluate the position
+                        score = minimax_search(test_board, depth - 1, color, evaluate_position, alpha, beta, False)
                         if score > best_score:
                             best_score = score
                             best_moves = [((row, col), move)]
