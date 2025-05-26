@@ -4,7 +4,7 @@ import random
 from flask import Blueprint, jsonify, current_app, render_template, request
 from app.game import GameManager
 from app.player import HumanPlayer
-from app.bots import IdiotBot, WhiteIdiotBot, BlackIdiotBot, GreedyBot
+from app.bots import IdiotBot, WhiteIdiotBot, BlackIdiotBot, GreedyBot, MinimaxBot, BetterMinimaxBotOne, BetterMinimaxBotTwo
 
 api = Blueprint("api", __name__)
 
@@ -12,6 +12,9 @@ BOT_REGISTRY = {
     "white_idiot": WhiteIdiotBot,
     "black_idiot": BlackIdiotBot,
     "pongo": GreedyBot,
+    "borzoi": MinimaxBot,
+    "barrowofmonkeys": BetterMinimaxBotOne,
+    "gigantopithecus": BetterMinimaxBotTwo,
     # Add others here
 }
 
@@ -109,7 +112,10 @@ def get_available_bots():
         "bots": [
             {"id": "white_idiot", "name": "Wyatt", "description": "Picks a random legal move. Plays white.", "avatar": "wyatt.png"},
             {"id": "black_idiot", "name": "Moose", "description": "Picks a random legal move. Plays black.", "avatar": "moose.png"},
-            {"id": "pongo", "name": "Pongo", "description": "Picks the best move by piece value.", "avatar": "pongo.png"}
+            {"id": "pongo", "name": "Pongo", "description": "Picks the best move by piece value.", "avatar": "pongo.png"},
+            {"id": "borzoi", "name": "Borzoi", "description": "Uses 1-ply minimax to find the best move.", "avatar": "borzoi.png"},
+            {"id": "barrowofmonkeys", "name": "Barrow of Monkeys", "description": "Uses 2-ply minimax with mobility evaluation.", "avatar": "barrowofmonkeys.png"},
+            {"id": "gigantopithecus", "name": "Gigantopithecus", "description": "Uses 2-ply minimax with safety evaluation.", "avatar": "gigantopithecus.png"}
         ]
     })
 

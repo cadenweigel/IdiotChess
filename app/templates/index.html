@@ -8,28 +8,11 @@
   <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
 </head>
 <body>
-  <div class="container">
-    <h1>Welcome to Idiot Chess!</h1>
-    <p>Choose your color and a bot to play against</p>
-
-    <form id="start-game-form">
-      <div class="color-selection">
-        <div class="color-option" data-color="white">
-          <div class="color-icon white"></div>
-          <span>White</span>
-        </div>
-        <div class="color-option" data-color="random">
-          <div class="color-icon random"></div>
-          <span>Random</span>
-        </div>
-        <div class="color-option" data-color="black">
-          <div class="color-icon black"></div>
-          <span>Black</span>
-        </div>
-      </div>
-
+  <div class="main-flex">
+    <div class="panel" id="left-panel">
+      <h1>Welcome to Idiot Chess!</h1>
+      <p class="subtitle-center">Choose a bot to play against</p>
       <h2>Idiot Bots</h2>
-
       <div class="bot-selection">
         <div class="bot-card" data-bot-color="white" data-bot-type="white_idiot">
           <div class="bot-avatar-container">
@@ -38,7 +21,6 @@
           <h3>Wyatt</h3>
           <p class="bot-description">Picks a random legal move. Plays white.</p>
         </div>
-
         <div class="bot-card" data-bot-color="black" data-bot-type="black_idiot">
           <div class="bot-avatar-container">
             <img id="black-bot-avatar" class="bot-avatar" alt="Moose avatar" />
@@ -46,7 +28,6 @@
           <h3>Moose</h3>
           <p class="bot-description">Picks a random legal move. Plays black.</p>
         </div>
-
         <div class="bot-card" data-bot-type="pongo">
           <div class="bot-avatar-container">
             <img id="pongo-bot-avatar" class="bot-avatar" alt="Pongo avatar" />
@@ -55,11 +36,51 @@
           <p class="bot-description">Picks the best move by piece value.</p>
         </div>
       </div>
-
       <h2>Dumb Bots</h2>
-
-      <button type="submit">Start Game</button>
-    </form>
+      <div class="bot-selection">
+        <div class="bot-card" data-bot-type="borzoi">
+          <div class="bot-avatar-container">
+            <img id="borzoi-bot-avatar" class="bot-avatar" alt="Borzoi avatar" />
+          </div>
+          <h3>Borzoi</h3>
+          <p class="bot-description">Sniffs two moves ahead to find the best move.</p>
+        </div>
+        <div class="bot-card" data-bot-type="barrowofmonkeys">
+          <div class="bot-avatar-container">
+            <img id="barrowofmonkeys-bot-avatar" class="bot-avatar" alt="Barrow of Monkeys avatar" />
+          </div>
+          <h3>Barrow of Monkeys</h3>
+          <p class="bot-description">Put their brains together to prioritize mobility.</p>
+        </div>
+        <div class="bot-card" data-bot-type="gigantopithecus">
+          <div class="bot-avatar-container">
+            <img id="gigantopithecus-bot-avatar" class="bot-avatar" alt="Gigantopithecus avatar" />
+          </div>
+          <h3>Gigantopithecus</h3>
+          <p class="bot-description">Prioritizes king safety over mobility.</p>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="right-panel">
+      <form id="start-game-form">
+        <h2 class="subtitle-center">Pick a color</h2>
+        <div class="color-selection">
+          <div class="color-option" data-color="white">
+            <div class="color-icon white"></div>
+            <span>White</span>
+          </div>
+          <div class="color-option" data-color="random">
+            <div class="color-icon random"></div>
+            <span>Random</span>
+          </div>
+          <div class="color-option" data-color="black">
+            <div class="color-icon black"></div>
+            <span>Black</span>
+          </div>
+        </div>
+        <button type="submit">Start Game</button>
+      </form>
+    </div>
   </div>
 
   <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>

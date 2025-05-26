@@ -1,7 +1,9 @@
 import random
 from app.player import Player
 from app.board import Board
-from app.move_scoring import score_move_by_piece_value
+from app.move_scoring import score_move_by_piece_value, find_best_greedy_move, find_random_move
+from app.position_evaluation import evaluate_position_mobility, evaluate_position_safety
+from app.minimax_search import find_best_move
 
 class IdiotBot(Player):
     def __init__(self, name: str, color: str, image: str = None):
@@ -13,25 +15,7 @@ class IdiotBot(Player):
         When in check, only considers moves that get out of check.
         Returns a tuple: (from_position, to_position) or None if no valid moves (checkmate)
         """
-        all_moves = []
-
-        # First check if we're in checkmate
-        if board.is_checkmate(self.color):
-            return None
-
-        for row in range(8):
-            for col in range(8):
-                piece = board.get_piece_at((row, col))
-                if piece and piece.color == self.color:
-                    for move in piece.get_valid_moves(board):
-                        # Create a test board to check if this move is valid
-                        test_board = board.copy()
-                        if test_board.move_piece((row, col), move):
-                            # If we're in check, only keep moves that get us out of check
-                            if not board.is_in_check(self.color) or not test_board.is_in_check(self.color):
-                                all_moves.append(((row, col), move))
-
-        return random.choice(all_moves) if all_moves else None
+        return find_random_move(board, self.color)
 
 class WhiteIdiotBot(IdiotBot):
     def __init__(self):
@@ -51,31 +35,33 @@ class GreedyBot(Player):
         When in check, only considers moves that get out of check.
         Returns a tuple: (from_position, to_position) or None if no valid moves (checkmate)
         """
-        best_score = float('-inf')
-        best_moves = []
+        return find_best_greedy_move(board, self.color)
 
-        # First check if we're in checkmate
-        if board.is_checkmate(self.color):
-            return None
+class MinimaxBot(Player):
+    def __init__(self, name: str, color: str, image: str = None):
+        super().__init__(name="Borzoi", color=color, image="borzoi.png")
 
-        for row in range(8):
-            for col in range(8):
-                piece = board.get_piece_at((row, col))
-                if piece and piece.color == self.color:
-                    for move in piece.get_valid_moves(board):
-                        # Create a test board to check if this move is valid
-                        test_board = board.copy()
-                        if test_board.move_piece((row, col), move):
-                            # If we're in check, only keep moves that get us out of check
-                            if board.is_in_check(self.color):
-                                # If we're in check, only keep moves that get us out of check
-                                if test_board.is_in_check(self.color):
-                                    continue  # Skip this move as it doesn't get us out of check
-                            score = score_move_by_piece_value(board, (row, col), move, self.color)
-                            if score > best_score:
-                                best_score = score
-                                best_moves = [((row, col), move)]
-                            elif score == best_score:
-                                best_moves.append(((row, col), move))
+    def decide_move(self, board: Board):
+        """
+        Implements a one-ply minimax algorithm to choose the best move.
+        Looks one move ahead for both players and chooses the move that leads to
+        the best position after the opponent's best response.
+        Returns a tuple: (from_position, to_position) or None if no valid moves (checkmate)
+        """
+        return find_best_move(board, self.color, 1, score_move_by_piece_value)
 
-        return random.choice(best_moves) if best_moves else None
+class BetterMinimaxBotOne(MinimaxBot):
+    def __init__(self, name: str, color: str, image: str = None):
+        super().__init__(name="Barrow of Monkeys", color=color, image="barrowofmonkeys.png")
+    
+    def decide_move(self, board: Board):
+        """Decide move using 2-ply minimax with alpha-beta pruning."""
+        return find_best_move(board, self.color, 2, evaluate_position_mobility)
+
+class BetterMinimaxBotTwo(MinimaxBot):
+    def __init__(self, name: str, color: str, image: str = None):
+        super().__init__(name="Gigantopithecus", color=color, image="gigantopithecus.png")
+    
+    def decide_move(self, board: Board):
+        """Decide move using 2-ply minimax with alpha-beta pruning."""
+        return find_best_move(board, self.color, 2, evaluate_position_safety) 

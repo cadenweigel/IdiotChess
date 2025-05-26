@@ -15,6 +15,9 @@ async function loadBotOptions() {
     document.getElementById("white-bot-avatar").src = `/static/images/avatars/${botMap["white_idiot"].avatar}`;
     document.getElementById("black-bot-avatar").src = `/static/images/avatars/${botMap["black_idiot"].avatar}`;
     document.getElementById("pongo-bot-avatar").src = `/static/images/avatars/${botMap["pongo"].avatar}`;
+    document.getElementById("borzoi-bot-avatar").src = `/static/images/avatars/${botMap["borzoi"].avatar}`;
+    document.getElementById("barrowofmonkeys-bot-avatar").src = `/static/images/avatars/${botMap["barrowofmonkeys"].avatar}`;
+    document.getElementById("gigantopithecus-bot-avatar").src = `/static/images/avatars/${botMap["gigantopithecus"].avatar}`;
     
     // Initially disable the start button
     document.querySelector('button[type="submit"]').disabled = true;

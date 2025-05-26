@@ -1,4 +1,6 @@
 from app.board import Board
+from typing import Optional, Tuple
+import random
 
 # Standard piece values
 PIECE_VALUES = {
@@ -43,3 +45,74 @@ def score_move_by_piece_value(board: Board, from_pos: tuple, to_pos: tuple, colo
     # - Pawn structure
     # - Control of open files
     # - Piece mobility
+
+def find_best_greedy_move(board: Board, color: str) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
+    """
+    Find the best move using greedy search based on piece values and captures.
+    
+    Args:
+        board: Current board state
+        color: Color of the player to move
+        
+    Returns:
+        Optional[Tuple[Tuple[int, int], Tuple[int, int]]]: Best move as (from_pos, to_pos) or None if no valid moves
+    """
+    best_score = float('-inf')
+    best_moves = []
+
+    # First check if we're in checkmate
+    if board.is_checkmate(color):
+        return None
+
+    for row in range(8):
+        for col in range(8):
+            piece = board.get_piece_at((row, col))
+            if piece and piece.color == color:
+                for move in piece.get_valid_moves(board):
+                    # Create a test board to check if this move is valid
+                    test_board = board.copy()
+                    if test_board.move_piece((row, col), move):
+                        # If we're in check, only keep moves that get us out of check
+                        if board.is_in_check(color):
+                            if test_board.is_in_check(color):
+                                continue  # Skip this move as it doesn't get us out of check
+                        score = score_move_by_piece_value(board, (row, col), move, color)
+                        if score > best_score:
+                            best_score = score
+                            best_moves = [((row, col), move)]
+                        elif score == best_score:
+                            best_moves.append(((row, col), move))
+
+    return random.choice(best_moves) if best_moves else None
+
+def find_random_move(board: Board, color: str) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
+    """
+    Find a random valid move from all available options.
+    When in check, only considers moves that get out of check.
+    
+    Args:
+        board: Current board state
+        color: Color of the player to move
+        
+    Returns:
+        Optional[Tuple[Tuple[int, int], Tuple[int, int]]]: Random move as (from_pos, to_pos) or None if no valid moves
+    """
+    all_moves = []
+
+    # First check if we're in checkmate
+    if board.is_checkmate(color):
+        return None
+
+    for row in range(8):
+        for col in range(8):
+            piece = board.get_piece_at((row, col))
+            if piece and piece.color == color:
+                for move in piece.get_valid_moves(board):
+                    # Create a test board to check if this move is valid
+                    test_board = board.copy()
+                    if test_board.move_piece((row, col), move):
+                        # If we're in check, only keep moves that get us out of check
+                        if not board.is_in_check(color) or not test_board.is_in_check(color):
+                            all_moves.append(((row, col), move))
+
+    return random.choice(all_moves) if all_moves else None

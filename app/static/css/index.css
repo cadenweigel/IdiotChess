@@ -7,20 +7,91 @@ body {
   background-size: auto; /* use image's natural size */
   margin: 0;
   padding: 0;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  padding: 2rem 0;
+}
+
+.main-flex {
+  display: flex;
+  flex-direction: row;
+  gap: 2.5rem;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1800px;
+}
+
+#left-panel.panel {
+  max-width: 1100px;
+}
+
+#right-panel.panel {
+  max-width: 320px;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.panel {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem 3rem;
+  width: 100%;
+  max-width: 420px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar for panels */
+.panel::-webkit-scrollbar {
+  width: 8px;
+}
+.panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.panel::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.panel::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 .container {
-  text-align: center;
-  background-color: white;
-  padding: 2.5rem 3rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   width: 100%;
-  max-width: 800px;
+  max-width: 1400px;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Add custom scrollbar styles */
+.container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 h1 {
@@ -50,6 +121,9 @@ form {
 }
 
 .bot-card {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
   background-color: #f8f9fa;
   border-radius: 12px;
   padding: 1rem;
@@ -57,6 +131,13 @@ form {
   transition: all 0.3s ease;
   position: relative;
   border: 2px solid transparent;
+  min-height: 230px;
+  height: 230px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .bot-card:hover {
@@ -189,4 +270,10 @@ button:disabled {
 .color-option span {
   font-size: 0.85rem;
   color: #2c3e50;
+}
+
+.subtitle-center {
+  text-align: center;
+  width: 100%;
+  margin-bottom: 1.5rem;
 }
