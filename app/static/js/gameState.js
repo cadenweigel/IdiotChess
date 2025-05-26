@@ -9,16 +9,16 @@ let moveCount = 0;
 let currentPlayerColor = null;  // Add this for drag and drop validation
 
 // DOM Elements
-let board;
-let statusMessage;
-let movesList;
-let resignBtn;
-let newGameBtn;
-let startGameBtn;
-let gameNotStartedOverlay;
+let board = null;
+let statusMessage = null;
+let movesList = null;
+let resignBtn = null;
+let newGameBtn = null;
+let startGameBtn = null;
+let gameNotStartedOverlay = null;
 
 // Initialize DOM elements
-export function initializeDOMElements() {
+function initializeDOMElements() {
     board = document.getElementById('chessboard');
     statusMessage = document.getElementById('status-message');
     movesList = document.getElementById('moves-list');
@@ -26,6 +26,15 @@ export function initializeDOMElements() {
     newGameBtn = document.getElementById('new-game-btn');
     startGameBtn = document.getElementById('start-game-btn');
     gameNotStartedOverlay = document.getElementById('game-not-started-overlay');
+
+    // Log any missing elements for debugging
+    if (!board) console.error('Chessboard element not found');
+    if (!statusMessage) console.error('Status message element not found');
+    if (!movesList) console.error('Moves list element not found');
+    if (!resignBtn) console.error('Resign button not found');
+    if (!newGameBtn) console.error('New game button not found');
+    if (!startGameBtn) console.error('Start game button not found');
+    if (!gameNotStartedOverlay) console.error('Game not started overlay not found');
 }
 
 // Update game status message
@@ -127,5 +136,6 @@ export {
     resignBtn,
     newGameBtn,
     startGameBtn,
-    gameNotStartedOverlay
+    gameNotStartedOverlay,
+    initializeDOMElements
 }; 

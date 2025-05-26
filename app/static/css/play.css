@@ -36,11 +36,18 @@ body {
 /* Game Container */
 .game-container {
     display: flex;
-    gap: 30px;
+    gap: 2rem;
     justify-content: center;
     align-items: flex-start;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* Side Panel */
+.side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 250px;
 }
 
 /* Board Container */
@@ -107,33 +114,65 @@ body {
 }
 
 #chessboard {
-    width: 560px;
-    height: 560px;
-    border: 2px solid #333;
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(8, 1fr);
+    width: 640px;
+    height: 640px;
+    border: 2px solid #333;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .square {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
     cursor: pointer;
     transition: background-color 0.2s;
+}
+
+.square.light {
+    background-color: #f0d9b5;
+}
+
+.square.dark {
+    background-color: #b58863;
+}
+
+.square:hover {
+    opacity: 0.9;
+}
+
+.square.selected {
+    background-color: #94c47d !important;
+}
+
+.square.valid-move {
     position: relative;
 }
 
+.square.valid-move::before {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background-color: rgba(0, 255, 0, 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
 .piece-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    width: 70px;
+    height: 70px;
+    pointer-events: none;
     user-select: none;
-    -webkit-user-drag: element;
-    cursor: grab;
-    transition: transform 0.3s ease-out;
+    transition: transform 0.2s;
+}
+
+.piece-image.moving {
+    transition: all 0.3s ease;
 }
 
 .piece-image.dragging {
@@ -164,24 +203,17 @@ body {
     animation: movePiece 0.3s ease-out;
 }
 
-.square.white {
-    background-color: #f0d9b5;
+.square.valid-move::after {
+    content: "×";
+    position: absolute;
+    font-size: 40px;
+    color: #000;
+    opacity: 0.5;
+    pointer-events: none;
 }
 
-.square.black {
-    background-color: #b58863;
-}
-
-.square.selected {
-    background-color: #7b61ff !important;
-}
-
-.square.valid-move {
-    background-color: rgba(144, 238, 144, 0.7) !important;
-}
-
-.square.valid-move:hover {
-    background-color: rgba(144, 238, 144, 0.9) !important;
+.square.valid-move:hover::after {
+    opacity: 0.7;
 }
 
 .square.drag-over {
@@ -204,7 +236,7 @@ body {
     padding: 1rem;
     background-color: #f5f5f5;
     border-radius: 8px;
-    min-width: 250px;
+    width: 400px;
 }
 
 /* Player Info */
@@ -212,9 +244,11 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
-    padding: 0.5rem;
+    padding: 1rem;
     border-radius: 4px;
     transition: background-color 0.3s;
+    width: 100%;
+    min-height: 80px;
 }
 
 .player-info.active {
@@ -235,9 +269,9 @@ body {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    margin-right: 15px;
     object-fit: cover;
     border: 2px solid #ccc;
+    flex-shrink: 0;
 }
 
 .white-player .player-avatar {
@@ -248,17 +282,87 @@ body {
     border-color: #b58863;
 }
 
-.player-details h3 {
-    margin-bottom: 5px;
+.player-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.player-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.player-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Captured Pieces */
+.captured-pieces {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    min-width: 250px;
+}
+
+.captured-pieces-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.captured-pieces-section:last-child {
+    margin-bottom: 0;
+}
+
+.captured-pieces-section h4 {
+    margin: 0;
+    color: #333;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.captured-pieces-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: 220px;
+    min-height: 32px;
+}
+
+.white-player .captured-pieces-list {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.black-player .captured-pieces-list {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.captured-piece {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    display: block;
 }
 
 /* Move History */
 .move-history {
-    flex: 0 0 200px;
     background-color: #f5f5f5;
     padding: 1rem;
     border-radius: 8px;
-    height: 560px;
+    flex-grow: 1;
+    min-height: 300px;
     overflow-y: auto;
 }
 
@@ -267,12 +371,14 @@ body {
     margin-bottom: 1rem;
     color: #333;
     font-size: 1.2em;
+    font-weight: 600;
 }
 
 #moves-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    font-family: Arial, sans-serif;
 }
 
 .move-container {
@@ -280,36 +386,42 @@ body {
     align-items: center;
     padding: 0.5rem;
     border-radius: 4px;
-    transition: background-color 0.2s;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 0.95rem;
 }
 
 .move-container:hover {
-    filter: brightness(0.95);
+    background-color: #f0f0f0;
 }
 
 .move-number {
-    font-weight: bold;
-    margin-right: 0.5rem;
+    font-weight: 600;
+    margin-right: 0.75rem;
     color: #666;
+    min-width: 2rem;
+    font-family: Arial, sans-serif;
 }
 
 .move-text {
     flex: 1;
-    font-family: monospace;
-    padding: 2px 6px;
-    border-radius: 4px;
-    min-width: 60px;
-    text-align: center;
+    text-align: left;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    font-family: Arial, sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
 }
 
 .white-move {
-    color: #333;
     background-color: #f0d9b5;
+    color: #333;
+    margin-right: 0.5rem;
 }
 
 .black-move {
-    color: #fff;
     background-color: #b58863;
+    color: #fff;
 }
 
 /* Game Controls */

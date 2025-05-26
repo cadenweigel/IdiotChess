@@ -8,79 +8,98 @@ import { updateBoard, lastMove } from './boardUI.js';
 import { addMoveToHistory } from './moveHistory.js';
 import { fetchBoardState } from './eventHandlers.js';
 
-// Make a bot move
+// Make bot move
 async function makeBotMove() {
-    const sessionId = getSessionId();
-    if (!sessionId) {
-        console.error('No session ID available for bot move');
-        return;
-    }
-
     try {
-        // Get current board state to determine whose turn it is
-        const response = await fetch(`/api/board?session_id=${sessionId}`);
-        const data = await response.json();
+        // First check if it's actually a bot's turn
+        const currentState = await fetchBoardState();
+        const isBotTurn = (currentState.turn === 'white' && getWhiteBot() !== 'You') || 
+                         (currentState.turn === 'black' && getBlackBot() !== 'You');
         
-        // Determine which bot should move based on current turn and bot configuration
-        const currentTurn = data.turn;
-        const whiteBot = getWhiteBot();
-        const blackBot = getBlackBot();
-        const isWhiteBot = whiteBot !== 'You';
-        const isBlackBot = blackBot !== 'You';
-        
-        console.log('Current turn:', currentTurn);
-        console.log('Bot configuration:', { whiteBot, blackBot });
-        
-        // Only make a bot move if it's the bot's turn
-        if ((currentTurn === 'white' && !isWhiteBot) || (currentTurn === 'black' && !isBlackBot)) {
+        if (!isBotTurn) {
             console.log('Not bot turn, skipping bot move');
             return;
         }
-        
-        console.log('Making bot move for color:', currentTurn);
-        
-        // Make the bot move request
-        const moveResponse = await fetch('/api/bot-move', {
+
+        const currentSessionId = getSessionId();
+        if (!currentSessionId) {
+            console.error('No session ID available for bot move');
+            return;
+        }
+
+        console.log('Making bot move for session:', currentSessionId, 'turn:', currentState.turn);
+        console.log('Bot configuration:', { whiteBot: getWhiteBot(), blackBot: getBlackBot() });
+
+        const response = await fetch('/api/bot-move', {
             method: 'POST',
-            headers: {
+            headers: { 
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({
-                session_id: sessionId,
-                bot_color: currentTurn
+            body: JSON.stringify({ 
+                session_id: currentSessionId,
+                bot_color: currentState.turn
             })
         });
 
-        if (!moveResponse.ok) {
-            const errorData = await moveResponse.json();
-            throw new Error(`Bot move failed: ${moveResponse.status} ${JSON.stringify(errorData)}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Bot move failed:', response.status, errorData);
+            updateStatus('Error making bot move. Please try again.');
+            return;
         }
 
-        const moveData = await moveResponse.json();
-        if (moveData.success) {
-            // Set lastMove for animation if move data is available
-            if (moveData.move && moveData.move.from && moveData.move.to && moveData.move.piece) {
-                lastMove.from = moveData.move.from;
-                lastMove.to = moveData.move.to;
-                lastMove.piece = moveData.move.piece;
-            }
-            // Update the board with the new state
-            await updateBoard();
-            updateStatus(moveData.status);
+        const data = await response.json();
+        console.log('Bot move response:', data);
+
+        if (data.success) {
+            // Get the piece that was moved
+            const fromSquare = data.move.from;
+            const piece = currentState.board[fromSquare[0]][fromSquare[1]];
             
-            // Add the move to history if we have valid move data
-            if (moveData.move && moveData.move.from && moveData.move.to) {
+            // Update lastMove properties instead of reassigning
+            lastMove.from = data.move.from;
+            lastMove.to = data.move.to;
+            lastMove.piece = {
+                type: piece.type,
+                color: piece.color,
+                symbol: piece.symbol
+            };
+            
+            await updateBoard();
+            updateStatus(data.status);
+            
+            // Only add to move history if we have valid move data
+            if (data.move && data.move.from && data.move.to) {
                 addMoveToHistory(
-                    moveData.move.from,
-                    moveData.move.to,
-                    currentTurn
+                    data.move.from,
+                    data.move.to,
+                    currentState.turn
                 );
             }
+            
+            // Check if it's still a bot's turn after the move
+            const newState = await fetchBoardState();
+            const isStillBotTurn = (newState.turn === 'white' && getWhiteBot() !== 'You') || 
+                                 (newState.turn === 'black' && getBlackBot() !== 'You');
+            
+            if (isStillBotTurn) {
+                await makeBotMove();
+            }
+        } else {
+            console.error('Bot move failed:', data.error);
+            updateStatus('Error: ' + (data.error || 'Failed to make bot move'));
         }
     } catch (error) {
         console.error('Bot move failed:', error);
-        updateStatus('Error making bot move');
+        updateStatus('Error making bot move. Please try again.');
+        
+        // Try to recover by updating the board state
+        try {
+            await updateBoard();
+        } catch (e) {
+            console.error('Failed to recover board state:', e);
+        }
     }
 }
 

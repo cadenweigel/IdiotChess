@@ -22,16 +22,21 @@ class Board:
         self.grid[row][col] = piece
         piece.set_position(position)
 
-    def remove_piece(self, position):
+    def remove_piece(self, position, capture: bool = True):
         """
-        Remove a piece from the board and store it as captured.
+        Remove a piece from the board and optionally store it as captured.
+        
+        Args:
+            position: The position of the piece to remove
+            capture: If True, add the piece to captured_pieces list. Default True.
         """
         row, col = position
         piece = self.grid[row][col]
 
         if piece:
             piece.set_position(None)
-            self.captured_pieces.append(piece)
+            if capture:
+                self.captured_pieces.append(piece)
 
         self.grid[row][col] = None
 
@@ -83,7 +88,7 @@ class Board:
             self.handle_capture(to_pos)
 
         self.grid[to_pos[0]][to_pos[1]] = piece
-        self.remove_piece(from_pos)
+        self.remove_piece(from_pos, capture=False)  # Don't capture the moving piece
         piece.set_position(to_pos)
         piece.mark_as_moved()
 
@@ -224,7 +229,7 @@ class Board:
 
     def handle_capture(self, to_pos: Position):
         target = self.get_piece_at(to_pos)
-        if target and target.color != self.get_piece_at(to_pos).color:
+        if target:
             self.remove_piece(to_pos)
 
     def handle_promotion(self, pawn: Pawn, to_pos: Position, promotion_piece_cls=None):
@@ -289,6 +294,46 @@ class Board:
 
     def get_captured_pieces(self) -> List:
         return self.captured_pieces
+
+    def get_captured_pieces_unicode(self) -> dict[str, list[str]]:
+        """
+        Returns captured pieces as Unicode symbols, grouped by captor.
+        'captured_by_white': black pieces captured by white
+        'captured_by_black': white pieces captured by black
+        """
+        unicode_pieces = {
+            'white': {
+                'Pawn': '♙',
+                'Rook': '♖',
+                'Knight': '♘',
+                'Bishop': '♗',
+                'Queen': '♕',
+                'King': '♔',
+            },
+            'black': {
+                'Pawn': '♟',
+                'Rook': '♜',
+                'Knight': '♞',
+                'Bishop': '♝',
+                'Queen': '♛',
+                'King': '♚',
+            }
+        }
+
+        captured_by_white = []  # black pieces captured
+        captured_by_black = []  # white pieces captured
+
+        for piece in self.captured_pieces:
+            symbol = unicode_pieces[piece.color][piece.__class__.__name__]
+            if piece.color == 'black':
+                captured_by_white.append(symbol)
+            elif piece.color == 'white':
+                captured_by_black.append(symbol)
+
+        return {
+            'captured_by_white': captured_by_white,
+            'captured_by_black': captured_by_black
+        }
 
     def print_board(self):
         """

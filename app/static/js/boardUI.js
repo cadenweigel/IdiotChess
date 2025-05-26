@@ -28,15 +28,18 @@ function positionToAlgebraic(position) {
 
 // Get piece image URL for a piece
 function getPieceImageUrl(piece) {
-    const color = piece.color === 'w' ? 'white' : 'black';
-    const type = piece.type;
+    if (!piece) return null;
+    
+    // Handle the new piece format from the server
+    const color = piece.color === 'white' ? 'white' : 'black';
+    const type = piece.type.toLowerCase();  // Get full piece type name
     const pieceNames = {
-        'p': 'pawn',
-        'n': 'knight',
-        'b': 'bishop',
-        'r': 'rook',
-        'q': 'queen',
-        'k': 'king'
+        'pawn': 'pawn',
+        'knight': 'knight',
+        'bishop': 'bishop',
+        'rook': 'rook',
+        'queen': 'queen',
+        'king': 'king'
     };
     return `static/images/pieces/${color}_${pieceNames[type]}.png`;
 }
@@ -58,26 +61,37 @@ async function updateBoard() {
         if (fromSquare && toSquare) {
             // Create a temporary image for the animation
             const tempImg = document.createElement('img');
-            tempImg.src = getPieceImageUrl({ color: lastMove.piece[0] === lastMove.piece[0].toUpperCase() ? 'w' : 'b', type: lastMove.piece.toLowerCase() });
+            // Use the new piece format
+            const pieceColor = lastMove.piece.color === 'white' ? 'white' : 'black';
+            const pieceType = lastMove.piece.type.toLowerCase()[0];
+            tempImg.src = `static/images/pieces/${pieceColor}_${getPieceNameFromType(pieceType)}.png`;
             tempImg.className = 'piece-image moving';
             tempImg.style.position = 'absolute';
             tempImg.style.width = '70px';
             tempImg.style.height = '70px';
             tempImg.style.pointerEvents = 'none';
             tempImg.style.zIndex = '2000';
+            
             // Set start position
             const fromRect = fromSquare.getBoundingClientRect();
             const toRect = toSquare.getBoundingClientRect();
             tempImg.style.left = `${fromRect.left - boardRect.left}px`;
             tempImg.style.top = `${fromRect.top - boardRect.top}px`;
             boardElem.appendChild(tempImg);
+            
             // Hide the piece in the from-square immediately
             const fromPieceImg = fromSquare.querySelector('img.piece-image');
             if (fromPieceImg) {
                 fromPieceImg.style.visibility = 'hidden';
             }
+            
             // Make a copy of lastMove for the update after animation
-            const animatingMove = { from: [...lastMove.from], to: [...lastMove.to], piece: lastMove.piece };
+            const animatingMove = { 
+                from: [...lastMove.from], 
+                to: [...lastMove.to], 
+                piece: {...lastMove.piece}  // Deep copy the piece object
+            };
+            
             // Animate to destination
             requestAnimationFrame(() => {
                 tempImg.style.left = `${toRect.left - boardRect.left}px`;
@@ -98,107 +112,127 @@ async function updateBoard() {
     await doUpdateBoard();
 }
 
-// The actual board update logic, separated from animation
-async function doUpdateBoard(animatingMove = null) {
-    const currentSessionId = getSessionId();
-    if (!currentSessionId) {
-        console.log('Waiting for session ID...');
+// Helper function to get piece name from type
+function getPieceNameFromType(type) {
+    const pieceNames = {
+        'pawn': 'pawn',
+        'knight': 'knight',
+        'bishop': 'bishop',
+        'rook': 'rook',
+        'queen': 'queen',
+        'king': 'king'
+    };
+    return pieceNames[type.toLowerCase()] || 'pawn';
+}
+
+// Update captured pieces display
+function updateCapturedPieces(capturedByWhite, capturedByBlack) {
+    console.log('Updating captured pieces:', { capturedByWhite, capturedByBlack });
+    const whiteCaptures = document.getElementById('white-captures');
+    const blackCaptures = document.getElementById('black-captures');
+    
+    if (!whiteCaptures || !blackCaptures) {
+        console.warn('Capture containers not found:', { whiteCaptures, blackCaptures });
         return;
     }
-    const response = await fetch(`/api/board?session_id=${currentSessionId}`);
-    const data = await response.json();
-    if (data.error) {
-        console.error(data.error);
-        return;
-    }
-    const humanIsWhite = typeof getWhiteBot === 'function' && getWhiteBot() === 'You';
-    const humanIsBlack = typeof getBlackBot === 'function' && getBlackBot() === 'You';
-    let ranks, files;
-    if (humanIsBlack) {
-        ranks = [7, 6, 5, 4, 3, 2, 1, 0];
-        files = [0, 1, 2, 3, 4, 5, 6, 7];
-    } else {
-        ranks = [0, 1, 2, 3, 4, 5, 6, 7];
-        files = [7, 6, 5, 4, 3, 2, 1, 0];
-    }
-    const chessboard = document.getElementById('chessboard');
-    for (let visualRank = 0; visualRank < 8; visualRank++) {
-        for (let visualFile = 0; visualFile < 8; visualFile++) {
-            const rank = ranks[visualRank];
-            const file = files[visualFile];
-            const position = `${rank},${file}`;
-            const square = document.querySelector(`[data-position="${position}"]`);
-            if (!square) {
-                const newSquare = document.createElement('div');
-                newSquare.className = `square ${(visualRank + visualFile) % 2 === 0 ? 'white' : 'black'}`;
-                newSquare.dataset.row = rank;
-                newSquare.dataset.col = file;
-                newSquare.dataset.position = position;
-                newSquare.dataset.square = positionToAlgebraic([rank, file]);
-                newSquare.addEventListener('click', handleSquareClick);
-                chessboard.appendChild(newSquare);
+
+    // Clear existing captures
+    whiteCaptures.innerHTML = '';
+    blackCaptures.innerHTML = '';
+
+    // Map Unicode symbols to piece types
+    const symbolToType = {
+        '♙': { type: 'pawn', color: 'white' },
+        '♖': { type: 'rook', color: 'white' },
+        '♘': { type: 'knight', color: 'white' },
+        '♗': { type: 'bishop', color: 'white' },
+        '♕': { type: 'queen', color: 'white' },
+        '♔': { type: 'king', color: 'white' },
+        '♟': { type: 'pawn', color: 'black' },
+        '♜': { type: 'rook', color: 'black' },
+        '♞': { type: 'knight', color: 'black' },
+        '♝': { type: 'bishop', color: 'black' },
+        '♛': { type: 'queen', color: 'black' },
+        '♚': { type: 'king', color: 'black' }
+    };
+
+    // Add captured pieces
+    if (Array.isArray(capturedByWhite)) {
+        capturedByWhite.forEach(symbol => {
+            const pieceInfo = symbolToType[symbol];
+            if (pieceInfo) {
+                const img = document.createElement('img');
+                img.src = `static/images/pieces/${pieceInfo.color}_${pieceInfo.type}.png`;
+                img.className = 'captured-piece';
+                img.alt = `${pieceInfo.color} ${pieceInfo.type}`;
+                whiteCaptures.appendChild(img);
             }
-            square.innerHTML = '';
-            const piece = data.board[rank][file];
-            if (piece) {
-                // Hide the piece in the from-square during animation
-                const moveToCheck = animatingMove || lastMove;
-                if (
-                    moveToCheck &&
-                    moveToCheck.from &&
-                    moveToCheck.piece &&
-                    moveToCheck.from[0] === rank &&
-                    moveToCheck.from[1] === file &&
-                    moveToCheck.piece === piece
-                ) {
-                    // Don't render the piece in the from-square during animation
-                } else {
-                    const pieceImage = document.createElement('img');
-                    pieceImage.src = getPieceImageUrl({ color: piece[0] === piece[0].toUpperCase() ? 'w' : 'b', type: piece.toLowerCase() });
-                    pieceImage.className = 'piece-image';
-                    square.appendChild(pieceImage);
-                }
-            }
-        }
+        });
     }
-    statusMessage.textContent = data.status;
-    updateTurnIndicator(data.turn);
+
+    if (Array.isArray(capturedByBlack)) {
+        capturedByBlack.forEach(symbol => {
+            const pieceInfo = symbolToType[symbol];
+            if (pieceInfo) {
+                const img = document.createElement('img');
+                img.src = `static/images/pieces/${pieceInfo.color}_${pieceInfo.type}.png`;
+                img.className = 'captured-piece';
+                img.alt = `${pieceInfo.color} ${pieceInfo.type}`;
+                blackCaptures.appendChild(img);
+            }
+        });
+    }
 }
 
 // Initialize the board
-function initializeBoard() {
-    board.innerHTML = '';
-    const humanIsBlack = typeof getBlackBot === 'function' && getBlackBot() === 'You';
-    let ranks, files;
-    if (humanIsBlack) {
-        ranks = [7, 6, 5, 4, 3, 2, 1, 0];
-        files = [0, 1, 2, 3, 4, 5, 6, 7];
-    } else {
-        ranks = [0, 1, 2, 3, 4, 5, 6, 7];
-        files = [7, 6, 5, 4, 3, 2, 1, 0];
-    }
-    for (let visualRank = 0; visualRank < 8; visualRank++) {
-        for (let visualFile = 0; visualFile < 8; visualFile++) {
-            const rank = ranks[visualRank];
-            const file = files[visualFile];
-            const square = document.createElement('div');
-            const isWhiteSquare = (visualRank + visualFile) % 2 === 0;
-            square.className = `square ${isWhiteSquare ? 'white' : 'black'}`;
-            const algebraic = `${String.fromCharCode(97 + file)}${rank + 1}`;
-            square.dataset.square = algebraic;
-            square.dataset.position = `${rank},${file}`;
-            square.addEventListener('click', handleSquareClick);
-            board.appendChild(square);
+async function initializeBoard() {
+    try {
+        const response = await fetch(`/api/board?session_id=${getSessionId()}`);
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const chessboard = document.getElementById('chessboard');
+        if (!chessboard) {
+            throw new Error('Chessboard element not found');
+        }
+
+        // Clear existing board
+        chessboard.innerHTML = '';
+
+        // Create squares with proper coloring
+        const humanIsBlack = typeof getBlackBot === 'function' && getBlackBot() === 'You';
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const square = document.createElement('div');
+                // Determine if this square should be light or dark
+                const isLightSquare = (row + col) % 2 === 0;
+                square.className = `square ${isLightSquare ? 'light' : 'dark'}`;
+                
+                // Set position data attributes
+                const actualRow = humanIsBlack ? 7 - row : row;
+                const actualCol = humanIsBlack ? col : col;
+                square.dataset.position = `${actualRow},${actualCol}`;
+                square.dataset.square = positionToAlgebraic([actualRow, actualCol]);
+                
+                // Add click handler
+                square.addEventListener('click', handleSquareClick);
+                
+                chessboard.appendChild(square);
+            }
+        }
+
+        // Update the board with initial position
+        await updateBoard();
+    } catch (error) {
+        console.error('Error initializing board:', error);
+        // Show a user-friendly error message
+        const board = document.getElementById('chessboard');
+        if (board) {
+            board.innerHTML = '<div class="error-message">Error loading the game board. Please try refreshing the page.</div>';
         }
     }
-    // Wait for session ID to be set before updating board
-    const checkSessionId = setInterval(() => {
-        const currentSessionId = getSessionId();
-        if (currentSessionId) {
-            clearInterval(checkSessionId);
-            updateBoard();
-        }
-    }, 100);
 }
 
 // Highlight a square
@@ -222,6 +256,93 @@ function clearHighlights() {
     document.querySelectorAll('.square').forEach(square => {
         square.classList.remove('selected', 'valid-move');
     });
+}
+
+// The actual board update logic, separated from animation
+async function doUpdateBoard(animatingMove = null) {
+    const currentSessionId = getSessionId();
+    if (!currentSessionId) {
+        console.log('Waiting for session ID...');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/board?session_id=${currentSessionId}`);
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        if (data.error) {
+            console.error(data.error);
+            return;
+        }
+
+        console.log('Board state received:', data);
+
+        // Update captured pieces if available
+        if (data.captured_by_white || data.captured_by_black) {
+            updateCapturedPieces(data.captured_by_white || [], data.captured_by_black || []);
+        }
+
+        const humanIsBlack = typeof getBlackBot === 'function' && getBlackBot() === 'You';
+        
+        // Update pieces on the board
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const actualRow = humanIsBlack ? 7 - row : row;
+                const actualCol = humanIsBlack ? col : col;
+                const position = `${actualRow},${actualCol}`;
+                const square = document.querySelector(`[data-position="${position}"]`);
+                
+                if (!square) {
+                    console.error(`Square not found for position ${position}`);
+                    continue;
+                }
+
+                // Clear existing pieces
+                square.innerHTML = '';
+                
+                // Add piece if one exists at this position
+                const piece = data.board[actualRow][actualCol];
+                if (piece) {
+                    // Skip the piece during animation if it's the moving piece
+                    const moveToCheck = animatingMove || lastMove;
+                    if (
+                        moveToCheck &&
+                        moveToCheck.from &&
+                        moveToCheck.piece &&
+                        moveToCheck.from[0] === actualRow &&
+                        moveToCheck.from[1] === actualCol &&
+                        moveToCheck.piece.type === piece.type &&
+                        moveToCheck.piece.color === piece.color
+                    ) {
+                        continue;
+                    }
+
+                    const pieceImageUrl = getPieceImageUrl(piece);
+                    if (pieceImageUrl) {
+                        const pieceImage = document.createElement('img');
+                        pieceImage.src = pieceImageUrl;
+                        pieceImage.className = 'piece-image';
+                        square.appendChild(pieceImage);
+                    }
+                }
+            }
+        }
+
+        // Update status and turn indicator
+        const statusMessageElem = document.getElementById('status-message');
+        if (statusMessageElem && data.status) {
+            statusMessageElem.textContent = data.status;
+        }
+        
+        if (data.turn) {
+            updateTurnIndicator(data.turn);
+        }
+    } catch (error) {
+        console.error('Error updating board:', error);
+    }
 }
 
 export {

@@ -47,12 +47,12 @@ class GreedyBot(Player):
 
     def decide_move(self, board: Board):
         """
-        Picks the best valid move from all available options based on piece values and captures.
+        Picks randomly from the best valid moves based on piece values and captures.
         When in check, only considers moves that get out of check.
         Returns a tuple: (from_position, to_position) or None if no valid moves (checkmate)
         """
         best_score = float('-inf')
-        best_move = None
+        best_moves = []
 
         # First check if we're in checkmate
         if board.is_checkmate(self.color):
@@ -74,6 +74,8 @@ class GreedyBot(Player):
                             score = score_move_by_piece_value(board, (row, col), move, self.color)
                             if score > best_score:
                                 best_score = score
-                                best_move = ((row, col), move)
+                                best_moves = [((row, col), move)]
+                            elif score == best_score:
+                                best_moves.append(((row, col), move))
 
-        return best_move
+        return random.choice(best_moves) if best_moves else None

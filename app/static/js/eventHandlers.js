@@ -130,7 +130,7 @@ function initializeEventListeners() {
     }
 
     // Handle start game button click
-    if (startGameBtn) {
+    if (startGameBtn && gameNotStartedOverlay) {
         startGameBtn.addEventListener('click', async () => {
             startGameBtn.style.display = 'none';
             gameNotStartedOverlay.style.display = 'none';  // Hide the overlay

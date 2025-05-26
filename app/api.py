@@ -113,24 +113,50 @@ def get_available_bots():
         ]
     })
 
+def piece_to_dict(piece):
+    """Convert a piece object to a dictionary representation"""
+    if piece is None:
+        return None
+    return {
+        'type': piece.__class__.__name__,
+        'color': piece.color,
+        'symbol': piece.symbol()
+    }
 
-@api.route("/api/board", methods=["GET"])
-def get_board_state():
-    session_id = request.args.get("session_id")
-    manager = current_app.config["games"].get(session_id)
-    if not manager:
-        return jsonify({"error": "Invalid session ID"}), 400
+@api.route("/api/board")
+def get_board():
+    session_id = request.args.get('session_id')
+    if not session_id or session_id not in current_app.config['games']:
+        return jsonify({'error': 'Invalid session ID'}), 400
 
-    board = manager.board
+    game = current_app.config['games'][session_id]
+    
+    # Convert board state to a format the client can understand
     board_state = []
-
-    for row in board.grid:
+    for row in game.board.grid:
         row_data = []
         for piece in row:
-            row_data.append(piece.symbol() if piece else None)
+            if piece is None:
+                row_data.append(None)
+            else:
+                row_data.append({
+                    'type': piece.__class__.__name__,
+                    'color': piece.color,
+                    'symbol': piece.symbol()
+                })
         board_state.append(row_data)
-
-    return jsonify({"board": board_state, "turn": manager.current_turn, "status": manager.get_game_status()})
+    
+    # Get captured pieces
+    captured_pieces = game.board.get_captured_pieces_unicode()
+    
+    return jsonify({
+        'board': board_state,
+        'turn': game.current_turn,
+        'move_history': game.move_history,
+        'status': game.get_game_status(),
+        'captured_by_white': captured_pieces['captured_by_white'],
+        'captured_by_black': captured_pieces['captured_by_black']
+    })
 
 @api.route("/api/move", methods=["POST"])
 def make_move():

@@ -8,6 +8,7 @@ class GameManager:
         self.board.setup_standard_position()
         self.current_turn = 'white'
         self.players = {'white': None, 'black': None}
+        self.move_history = []  # List of tuples (from_pos, to_pos, color)
 
     def set_players(self, white_player, black_player):
         self.players['white'] = white_player
@@ -39,6 +40,12 @@ class GameManager:
 
         success = self.board.move_piece(from_pos, to_pos, promotion_piece_cls=promotion_piece_cls)
         if success:
+            # Record the move in history
+            self.move_history.append({
+                'from': from_pos,
+                'to': to_pos,
+                'color': 'white' if self.current_turn == 'black' else 'black'  # Store the color that made the move
+            })
             self.switch_turn()
         return success
 
@@ -85,7 +92,8 @@ class GameManager:
                     'name': self.players['black'].name,
                     'color': self.players['black'].color
                 }
-            }
+            },
+            'move_history': self.move_history  # Include move history in serialization
         }
 
     @classmethod
@@ -93,6 +101,7 @@ class GameManager:
         """Create a GameManager instance from a dictionary"""
         manager = cls()
         manager.current_turn = data['current_turn']
+        manager.move_history = data.get('move_history', [])  # Restore move history
         
         # Restore board state
         from pieces import Pawn, Rook, Knight, Bishop, Queen, King

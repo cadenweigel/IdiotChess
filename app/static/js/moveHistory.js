@@ -4,12 +4,46 @@ import { getBlackBot } from './gameState.js';
 // Track move count internally
 let moveCount = 1; // Start at 1
 
+// Function to get moves list element
+function getMovesListElement() {
+    return document.getElementById('moves-list') || movesList;
+}
+
 // Function to scroll move history to bottom
 function scrollMoveHistoryToBottom() {
+    const movesList = getMovesListElement();
+    if (!movesList) return;
+    
     // Use setTimeout to ensure DOM updates are complete
     setTimeout(() => {
         movesList.scrollTop = movesList.scrollHeight;
     }, 50);
+}
+
+// Initialize move history from server data
+async function initializeMoveHistory(sessionId) {
+    try {
+        const response = await fetch(`/api/board?session_id=${sessionId}`);
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.move_history) {
+            // Clear existing move history
+            clearMoveHistory();
+            
+            // Add each move from the history
+            data.move_history.forEach(move => {
+                addMoveToHistory(move.from, move.to, move.color);
+            });
+        }
+    } catch (error) {
+        console.error('Error initializing move history:', error);
+        // Don't throw the error - allow the game to continue without move history
+        // We can try to recover it later
+    }
 }
 
 function flipCoordsIfHumanBlack([row, col]) {
@@ -28,6 +62,12 @@ function positionToAlgebraic(position) {
 
 // Add move to history
 function addMoveToHistory(from, to, color) {
+    const movesList = getMovesListElement();
+    if (!movesList) {
+        console.error('Moves list element not found');
+        return;
+    }
+
     const fromFlipped = flipCoordsIfHumanBlack(from);
     const toFlipped = flipCoordsIfHumanBlack(to);
     const fromElem = document.querySelector(`[data-position="${fromFlipped.join(',')}"]`);
@@ -99,6 +139,11 @@ function addMoveToHistory(from, to, color) {
 
 // Clear move history
 function clearMoveHistory() {
+    const movesList = getMovesListElement();
+    if (!movesList) {
+        console.error('Moves list element not found');
+        return;
+    }
     movesList.innerHTML = '';
     moveCount = 1;
 }
@@ -106,5 +151,6 @@ function clearMoveHistory() {
 export {
     addMoveToHistory,
     clearMoveHistory,
-    scrollMoveHistoryToBottom
+    scrollMoveHistoryToBottom,
+    initializeMoveHistory
 }; 
