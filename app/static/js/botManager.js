@@ -103,6 +103,26 @@ async function makeBotMove() {
     }
 }
 
+// Bot type to display name mapping
+const BOT_DISPLAY_NAMES = {
+    'white_idiot': 'Wyatt',
+    'black_idiot': 'Moose',
+    'pongo': 'Pongo',
+    'borzoi': 'Borzoi',
+    'barrowofmonkeys': 'Barrow of Monkeys',
+    'gigantopithecus': 'Gigantopithecus'
+};
+
+// Bot type to avatar filename mapping
+const BOT_AVATAR_FILES = {
+    'white_idiot': 'wyatt',
+    'black_idiot': 'moose',
+    'pongo': 'pongo',
+    'borzoi': 'borzoi',
+    'barrowofmonkeys': 'barrowofmonkeys',
+    'gigantopithecus': 'gigantopithecus'
+};
+
 // Load bot avatars
 function loadBotAvatars() {
     const whiteAvatar = document.getElementById('white-avatar');
@@ -116,25 +136,27 @@ function loadBotAvatars() {
     }
 
     // Always get the latest bot/player names from gameState
-    const whiteBotName = getWhiteBot() || 'You';
-    const blackBotName = getBlackBot() || 'You';
+    const whiteBotType = getWhiteBot() || 'You';
+    const blackBotType = getBlackBot() || 'You';
+
+    // Get display names from bot types
+    const whiteBotName = whiteBotType === 'You' ? 'You' : BOT_DISPLAY_NAMES[whiteBotType] || whiteBotType;
+    const blackBotName = blackBotType === 'You' ? 'You' : BOT_DISPLAY_NAMES[blackBotType] || blackBotType;
 
     // Handle avatar loading
     if (whiteBotName === 'You') {
         whiteAvatar.src = '/static/images/avatars/default_player.png';
-    } else if (whiteBotName === 'Pongo') {
-        whiteAvatar.src = '/static/images/avatars/pongo.png';
     } else {
-        whiteAvatar.src = `/static/images/avatars/${whiteBotName.toLowerCase()}.png`;
+        const whiteAvatarFile = BOT_AVATAR_FILES[whiteBotType] || whiteBotName.toLowerCase().replace(/\s+/g, '');
+        whiteAvatar.src = `/static/images/avatars/${whiteAvatarFile}.png`;
     }
     whiteName.textContent = whiteBotName;
 
     if (blackBotName === 'You') {
         blackAvatar.src = '/static/images/avatars/default_player.png';
-    } else if (blackBotName === 'Pongo') {
-        blackAvatar.src = '/static/images/avatars/pongo.png';
     } else {
-        blackAvatar.src = `/static/images/avatars/${blackBotName.toLowerCase()}.png`;
+        const blackAvatarFile = BOT_AVATAR_FILES[blackBotType] || blackBotName.toLowerCase().replace(/\s+/g, '');
+        blackAvatar.src = `/static/images/avatars/${blackAvatarFile}.png`;
     }
     blackName.textContent = blackBotName;
 }
