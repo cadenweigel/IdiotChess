@@ -8,8 +8,6 @@ __pycache__/
 venv/
 ENV/
 env/
-.venv
-venv
 
 # Distribution / packaging
 build/
@@ -66,3 +64,10 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Environment and tool config
+.env
+.cursorignore
+
+# Alembic migration scripts (optional)
+#migrations/versions/

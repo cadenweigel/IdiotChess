@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, current_app, render_template, request
 from app.game import GameManager
 from app.player import HumanPlayer
 from app.bots import IdiotBot, WhiteIdiotBot, BlackIdiotBot, GreedyBot, MinimaxBot, BetterMinimaxBotOne, BetterMinimaxBotTwo
+from app.models import db, Game, BoardState, Move
 
 api = Blueprint("api", __name__)
 
@@ -47,7 +48,7 @@ def new_game_vs_bot():
     
     print(f"Creating new game with bot color: {bot_color}")
 
-    session_id = str(uuid.uuid4())
+    session_id = uuid.uuid4()  # Use UUID object directly for database
     manager = GameManager()
 
     bot_cls = BOT_REGISTRY.get(bot_type)
@@ -55,6 +56,7 @@ def new_game_vs_bot():
         return jsonify({"error": "Invalid bot type"}), 400
 
     try:
+        # Set up players
         if bot_color == "white":
             print("Setting up white bot vs human")
             white_bot = bot_cls(name=bot_cls.__name__, color="white")
@@ -62,6 +64,10 @@ def new_game_vs_bot():
             print(f"White bot: {white_bot}")
             print(f"Black player: {black_player}")
             manager.set_players(white_bot, black_player)
+            white_type = "bot"
+            white_name = bot_cls.__name__
+            black_type = "human"
+            black_name = "You"
         else:
             print("Setting up human vs black bot")
             white_player = HumanPlayer(name="You", color="white")
@@ -69,15 +75,46 @@ def new_game_vs_bot():
             print(f"White player: {white_player}")
             print(f"Black bot: {black_bot}")
             manager.set_players(white_player, black_bot)
+            white_type = "human"
+            white_name = "You"
+            black_type = "bot"
+            black_name = bot_cls.__name__
 
-        current_app.config["games"][session_id] = manager
+        # Create game record in database
+        game = Game(
+            session_id=session_id,
+            current_turn=manager.current_turn,
+            game_status="active",
+            white_player_type=white_type,
+            black_player_type=black_type,
+            white_player_name=white_name,
+            black_player_name=black_name
+        )
+        db.session.add(game)
+
+        # Save initial board state
+        initial_board_state = BoardState(
+            session_id=session_id,
+            move_number=0,
+            board_state=manager.to_dict()['board'],
+            captured_pieces=[]
+        )
+        db.session.add(initial_board_state)
+
+        # Commit the transaction
+        db.session.commit()
+
+        # Keep in-memory copy for active game
+        current_app.config["games"][str(session_id)] = manager
+
         print(f"Game created with session ID: {session_id}")
         print(f"Initial turn: {manager.current_turn}")
         print(f"White player: {manager.players['white']}")
         print(f"Black player: {manager.players['black']}")
         
-        return jsonify({"session_id": session_id, "bot_color": bot_color})
+        return jsonify({"session_id": str(session_id), "bot_color": bot_color})
     except Exception as e:
+        db.session.rollback()
         print(f"Error creating game: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
@@ -130,14 +167,92 @@ def piece_to_dict(piece):
 @api.route("/api/board")
 def get_board():
     session_id = request.args.get('session_id')
-    if not session_id or session_id not in current_app.config['games']:
-        return jsonify({'error': 'Invalid session ID'}), 400
+    if not session_id:
+        return jsonify({'error': 'Missing session ID'}), 400
 
-    game = current_app.config['games'][session_id]
+    try:
+        session_id = uuid.UUID(session_id)
+    except ValueError:
+        return jsonify({'error': 'Invalid session ID format'}), 400
+
+    # Try to get game from memory first
+    manager = current_app.config["games"].get(str(session_id))
+    
+    # If not in memory, try to load from database
+    if not manager:
+        game = Game.query.get(session_id)
+        if not game:
+            return jsonify({'error': 'Game not found'}), 404
+
+        # Get the latest board state
+        latest_board_state = BoardState.query.filter_by(
+            session_id=session_id
+        ).order_by(BoardState.move_number.desc()).first()
+
+        if not latest_board_state:
+            return jsonify({'error': 'No board state found'}), 404
+
+        # Create new game manager
+        manager = GameManager()
+        
+        # Restore board state
+        from app.pieces import Pawn, Rook, Knight, Bishop, Queen, King
+        piece_classes = {
+            'Pawn': Pawn,
+            'Rook': Rook,
+            'Knight': Knight,
+            'Bishop': Bishop,
+            'Queen': Queen,
+            'King': King
+        }
+        
+        for row in range(8):
+            for col in range(8):
+                piece_data = latest_board_state.board_state[row][col]
+                if piece_data:
+                    piece_class = piece_classes[piece_data['type']]
+                    piece = piece_class(piece_data['color'])
+                    manager.board.place_piece(piece, (row, col))
+
+        # Restore players
+        if game.white_player_type == 'human':
+            manager.players['white'] = HumanPlayer(name=game.white_player_name, color='white')
+        else:
+            bot_cls = BOT_REGISTRY.get(game.white_player_name.lower().replace(' ', ''))
+            if bot_cls:
+                manager.players['white'] = bot_cls(name=game.white_player_name, color='white')
+            else:
+                manager.players['white'] = WhiteIdiotBot()
+
+        if game.black_player_type == 'human':
+            manager.players['black'] = HumanPlayer(name=game.black_player_name, color='black')
+        else:
+            bot_cls = BOT_REGISTRY.get(game.black_player_name.lower().replace(' ', ''))
+            if bot_cls:
+                manager.players['black'] = bot_cls(name=game.black_player_name, color='black')
+            else:
+                manager.players['black'] = BlackIdiotBot()
+
+        # Restore game state
+        manager.current_turn = game.current_turn
+
+        # Restore move history
+        moves = Move.query.filter_by(session_id=session_id).order_by(Move.move_number).all()
+        manager.move_history = [
+            {
+                'from': move.from_position,
+                'to': move.to_position,
+                'color': move.piece_color
+            }
+            for move in moves
+        ]
+
+        # Store in memory for future requests
+        current_app.config["games"][str(session_id)] = manager
     
     # Convert board state to a format the client can understand
     board_state = []
-    for row in game.board.grid:
+    for row in manager.board.grid:
         row_data = []
         for piece in row:
             if piece is None:
@@ -151,13 +266,13 @@ def get_board():
         board_state.append(row_data)
     
     # Get captured pieces
-    captured_pieces = game.board.get_captured_pieces_unicode()
+    captured_pieces = manager.board.get_captured_pieces_unicode()
     
     return jsonify({
         'board': board_state,
-        'turn': game.current_turn,
-        'move_history': game.move_history,
-        'status': game.get_game_status(),
+        'turn': manager.current_turn,
+        'move_history': manager.move_history,
+        'status': manager.get_game_status(),
         'captured_by_white': captured_pieces['captured_by_white'],
         'captured_by_black': captured_pieces['captured_by_black']
     })
@@ -167,13 +282,20 @@ def make_move():
     data = request.get_json()
     print("RAW JSON from request:", data)
     print("data.get('from') =", data.get("from"), "type:", type(data.get("from")))
-    session_id = data.get("session_id")
+    session_id = uuid.UUID(data.get("session_id"))  # Convert string to UUID
     from_pos = tuple(map(int, data.get("from")))
     to_pos = tuple(map(int, data.get("to")))
 
-    manager = current_app.config["games"].get(session_id)
-    if not manager:
+    # Get game from database
+    game = Game.query.get(session_id)
+    if not game:
         return jsonify({"error": "Invalid session ID"}), 400
+
+    # Get game manager from memory
+    manager = current_app.config["games"].get(str(session_id))
+    if not manager:
+        return jsonify({"error": "Game not found in memory"}), 400
+
     print(f"from_pos = {from_pos}, to_pos = {to_pos}, type(from_pos) = {type(from_pos)}")
     
     # Get the piece being moved
@@ -200,15 +322,51 @@ def make_move():
         if not test_board.move_piece(from_pos, to_pos, validate=False) or test_board.is_in_check(piece.color):
             return jsonify({"error": "You must move out of check"}), 400
     
-    success = manager.make_move(from_pos, to_pos)
-    if not success:
-        return jsonify({"error": "Invalid move"}), 400
+    try:
+        # Make the move in memory
+        success = manager.make_move(from_pos, to_pos)
+        if not success:
+            return jsonify({"error": "Invalid move"}), 400
 
-    return jsonify({
-        "success": True,
-        "turn": manager.current_turn,
-        "status": manager.get_game_status()
-    })
+        # Get the current move number
+        move_number = len(manager.move_history)
+
+        # Save move to database
+        move = Move(
+            session_id=session_id,
+            move_number=move_number,
+            from_position=list(from_pos),  # Convert tuple to list for array storage
+            to_position=list(to_pos),      # Convert tuple to list for array storage
+            piece_type=piece.__class__.__name__,
+            piece_color=piece.color
+        )
+        db.session.add(move)
+
+        # Save new board state
+        board_state = BoardState(
+            session_id=session_id,
+            move_number=move_number,
+            board_state=manager.to_dict()['board'],
+            captured_pieces=manager.board.get_captured_pieces_unicode()
+        )
+        db.session.add(board_state)
+
+        # Update game status
+        game.current_turn = manager.current_turn
+        game.game_status = manager.get_game_status()
+
+        # Commit all changes
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "turn": manager.current_turn,
+            "status": manager.get_game_status()
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error making move: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @api.route("/api/bot-move", methods=["POST"])
 def bot_move():
