@@ -25,6 +25,15 @@
                 <label for="black-bot-select">Black Bot:</label>
                 <select id="black-bot-select"></select>
             </div>
+            <div class="speed-control">
+                <label for="game-speed">Game Speed:</label>
+                <input type="range" id="game-speed" min="1" max="5" value="3" step="1">
+                <span id="speed-value">Normal</span>
+            </div>
+            <button id="pause-btn" class="control-btn">
+                <span class="pause-icon">⏸</span>
+                <span class="play-icon" style="display: none;">▶</span>
+            </button>
             <button id="start-botvbot-btn">Start Bot vs Bot</button>
         </div>
         <div class="game-container">

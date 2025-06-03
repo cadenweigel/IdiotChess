@@ -40,11 +40,11 @@ class GameManager:
 
         success = self.board.move_piece(from_pos, to_pos, promotion_piece_cls=promotion_piece_cls)
         if success:
-            # Record the move in history
+            # Record the move in history with the color of the piece that made the move
             self.move_history.append({
                 'from': from_pos,
                 'to': to_pos,
-                'color': 'white' if self.current_turn == 'black' else 'black'  # Store the color that made the move
+                'color': self.current_turn  # Store the color of the piece that made the move
             })
             self.switch_turn()
         return success

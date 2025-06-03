@@ -575,7 +575,17 @@ def cleanup_abandoned():
         Game.last_active < cutoff
     ).all()
     count = len(abandoned_games)
-    for game in abandoned_games:
-        db.session.delete(game)
-    db.session.commit()
-    return jsonify({"deleted": count})
+    
+    try:
+        for game in abandoned_games:
+            # Delete related records first
+            Move.query.filter_by(session_id=game.session_id).delete()
+            BoardState.query.filter_by(session_id=game.session_id).delete()
+            # Then delete the game
+            db.session.delete(game)
+        db.session.commit()
+        return jsonify({"deleted": count})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error cleaning up abandoned games: {str(e)}")
+        return jsonify({"error": str(e)}), 500
