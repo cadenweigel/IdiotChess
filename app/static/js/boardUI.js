@@ -61,22 +61,31 @@ async function updateBoard() {
         if (fromSquare && toSquare) {
             // Create a temporary image for the animation
             const tempImg = document.createElement('img');
-            // Use the new piece format
-            const pieceColor = lastMove.piece.color === 'white' ? 'white' : 'black';
-            const pieceType = lastMove.piece.type.toLowerCase()[0];
-            tempImg.src = `static/images/pieces/${pieceColor}_${getPieceNameFromType(pieceType)}.png`;
+            tempImg.src = getPieceImageUrl(lastMove.piece);
             tempImg.className = 'piece-image moving';
             tempImg.style.position = 'absolute';
             tempImg.style.width = '70px';
             tempImg.style.height = '70px';
             tempImg.style.pointerEvents = 'none';
             tempImg.style.zIndex = '2000';
+            tempImg.style.transition = 'none'; // Disable transition initially
             
-            // Set start position
-            const fromRect = fromSquare.getBoundingClientRect();
-            const toRect = toSquare.getBoundingClientRect();
-            tempImg.style.left = `${fromRect.left - boardRect.left}px`;
-            tempImg.style.top = `${fromRect.top - boardRect.top}px`;
+            // Calculate positions based on square size and position
+            const squareSize = boardElem.clientWidth / 8;  // Board is always square
+            const humanIsBlack = typeof getBlackBot === 'function' && getBlackBot() === 'You';
+            
+            // Only flip the row coordinate for board orientation, keep column as is
+            const fromRow = humanIsBlack ? 7 - lastMove.from[0] : lastMove.from[0];
+            const fromCol = lastMove.from[1];  // Don't flip column
+            const toRow = humanIsBlack ? 7 - lastMove.to[0] : lastMove.to[0];
+            const toCol = lastMove.to[1];  // Don't flip column
+            
+            // Calculate center positions for the piece
+            const pieceOffset = (squareSize - 70) / 2; // Center the 70px piece in the square
+            
+            // Set start position using square coordinates, centered in the square
+            tempImg.style.left = `${fromCol * squareSize + pieceOffset}px`;
+            tempImg.style.top = `${fromRow * squareSize + pieceOffset}px`;
             boardElem.appendChild(tempImg);
             
             // Hide the piece in the from-square immediately
@@ -92,15 +101,26 @@ async function updateBoard() {
                 piece: {...lastMove.piece}  // Deep copy the piece object
             };
             
-            // Animate to destination
+            // Force a reflow to ensure the initial position is applied
+            tempImg.offsetHeight;
+            
+            // Now enable the transition and animate to destination
             requestAnimationFrame(() => {
-                tempImg.style.left = `${toRect.left - boardRect.left}px`;
-                tempImg.style.top = `${toRect.top - boardRect.top}px`;
+                tempImg.style.transition = 'all 0.3s ease-out';
+                tempImg.style.left = `${toCol * squareSize + pieceOffset}px`;
+                tempImg.style.top = `${toRow * squareSize + pieceOffset}px`;
+                
                 setTimeout(async () => {
-                    boardElem.removeChild(tempImg);
-                    lastMove = {};
-                    // Now update the board for the new state, passing animatingMove
+                    // Update the board first while the animated piece is still visible
                     await doUpdateBoard(animatingMove);
+                    // Then fade out the animated piece
+                    tempImg.style.transition = 'opacity 0.1s';
+                    tempImg.style.opacity = '0';
+                    // Remove the animated piece after the fade completes
+                    setTimeout(() => {
+                        boardElem.removeChild(tempImg);
+                        lastMove = {};
+                    }, 100);  // Match the transition duration
                 }, 300);
             });
             return; // Don't update the board yet, wait for animation

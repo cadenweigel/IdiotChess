@@ -31,7 +31,7 @@ class GameManager:
             return f"Draw by {reason}."
         elif self.board.is_in_check(self.current_turn):
             return f"{self.current_turn.capitalize()} is in check."
-        return "Game ongoing."
+        return "active"
 
     def make_move(self, from_pos, to_pos, promotion_piece_cls=None):
         piece = self.board.get_piece_at(from_pos)

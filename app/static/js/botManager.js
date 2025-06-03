@@ -135,30 +135,44 @@ function loadBotAvatars() {
         return;
     }
 
-    // Always get the latest bot/player names from gameState
-    const whiteBotType = getWhiteBot() || 'You';
-    const blackBotType = getBlackBot() || 'You';
+    // Get the latest game state
+    fetch(`/api/board?session_id=${getSessionId()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error fetching game state:', data.error);
+                return;
+            }
 
-    // Get display names from bot types
-    const whiteBotName = whiteBotType === 'You' ? 'You' : BOT_DISPLAY_NAMES[whiteBotType] || whiteBotType;
-    const blackBotName = blackBotType === 'You' ? 'You' : BOT_DISPLAY_NAMES[blackBotType] || blackBotType;
+            const whiteBotType = getWhiteBot();
+            const blackBotType = getBlackBot();
 
-    // Handle avatar loading
-    if (whiteBotName === 'You') {
-        whiteAvatar.src = '/static/images/avatars/default_player.png';
-    } else {
-        const whiteAvatarFile = BOT_AVATAR_FILES[whiteBotType] || whiteBotName.toLowerCase().replace(/\s+/g, '');
-        whiteAvatar.src = `/static/images/avatars/${whiteAvatarFile}.png`;
-    }
-    whiteName.textContent = whiteBotName;
+            // Use player names from game state
+            const whitePlayerName = data.white_player_name;
+            const blackPlayerName = data.black_player_name;
 
-    if (blackBotName === 'You') {
-        blackAvatar.src = '/static/images/avatars/default_player.png';
-    } else {
-        const blackAvatarFile = BOT_AVATAR_FILES[blackBotType] || blackBotName.toLowerCase().replace(/\s+/g, '');
-        blackAvatar.src = `/static/images/avatars/${blackAvatarFile}.png`;
-    }
-    blackName.textContent = blackBotName;
+            // Handle avatar loading
+            if (whiteBotType === 'You') {
+                whiteAvatar.src = '/static/images/avatars/default_player.png';
+                whiteName.textContent = whitePlayerName === 'default' ? 'You' : whitePlayerName;
+            } else {
+                const whiteAvatarFile = BOT_AVATAR_FILES[whiteBotType] || whiteBotType.toLowerCase().replace(/\s+/g, '');
+                whiteAvatar.src = `/static/images/avatars/${whiteAvatarFile}.png`;
+                whiteName.textContent = BOT_DISPLAY_NAMES[whiteBotType] || whiteBotType;
+            }
+
+            if (blackBotType === 'You') {
+                blackAvatar.src = '/static/images/avatars/default_player.png';
+                blackName.textContent = blackPlayerName === 'default' ? 'You' : blackPlayerName;
+            } else {
+                const blackAvatarFile = BOT_AVATAR_FILES[blackBotType] || blackBotType.toLowerCase().replace(/\s+/g, '');
+                blackAvatar.src = `/static/images/avatars/${blackAvatarFile}.png`;
+                blackName.textContent = BOT_DISPLAY_NAMES[blackBotType] || blackBotType;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading bot avatars:', error);
+        });
 }
 
 export {

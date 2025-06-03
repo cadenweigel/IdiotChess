@@ -126,12 +126,14 @@ document.getElementById("start-game-form").addEventListener("submit", async (e) 
   }
   
   try {
+    const playerName = document.getElementById("player-name").value.trim() || "default";
     const response = await fetch("/api/new-game/bot", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
         bot_type: selectedBotType,
-        player_color: selectedColor // Send the player's color preference
+        player_color: selectedColor,
+        player_name: playerName
       })
     });
     

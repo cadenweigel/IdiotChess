@@ -57,7 +57,8 @@ moveHistoryObserver.observe(movesList, {
 // Update game status message
 function updateStatus(message) {
     if (statusMessage) {
-        statusMessage.textContent = message;
+        // Display "Game ongoing" when status is "active"
+        statusMessage.textContent = message === "active" ? "Game ongoing" : message;
     }
 
     // Check for game over conditions

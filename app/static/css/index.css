@@ -277,3 +277,22 @@ button:disabled {
   width: 100%;
   margin-bottom: 1.5rem;
 }
+
+.name-input {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.name-input input {
+  width: 80%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.name-input input:focus {
+  outline: none;
+  border-color: #666;
+}

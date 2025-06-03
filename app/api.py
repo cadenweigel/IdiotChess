@@ -32,6 +32,7 @@ def new_game_vs_bot():
     data = request.get_json()
     bot_type = data.get("bot_type", "black_idiot")
     player_color = data.get("player_color", "random")
+    player_name = data.get("player_name", "default")
     
     # For Pongo or when player chooses random, randomly choose the color
     if bot_type == "pongo" or player_color == "random":
@@ -60,23 +61,23 @@ def new_game_vs_bot():
         if bot_color == "white":
             print("Setting up white bot vs human")
             white_bot = bot_cls(name=bot_cls.__name__, color="white")
-            black_player = HumanPlayer(name="You", color="black")
+            black_player = HumanPlayer(name=player_name, color="black")
             print(f"White bot: {white_bot}")
             print(f"Black player: {black_player}")
             manager.set_players(white_bot, black_player)
             white_type = "bot"
             white_name = bot_cls.__name__
             black_type = "human"
-            black_name = "You"
+            black_name = player_name
         else:
             print("Setting up human vs black bot")
-            white_player = HumanPlayer(name="You", color="white")
+            white_player = HumanPlayer(name=player_name, color="white")
             black_bot = bot_cls(name=bot_cls.__name__, color="black")
             print(f"White player: {white_player}")
             print(f"Black bot: {black_bot}")
             manager.set_players(white_player, black_bot)
             white_type = "human"
-            white_name = "You"
+            white_name = player_name
             black_type = "bot"
             black_name = bot_cls.__name__
 
@@ -274,7 +275,9 @@ def get_board():
         'move_history': manager.move_history,
         'status': manager.get_game_status(),
         'captured_by_white': captured_pieces['captured_by_white'],
-        'captured_by_black': captured_pieces['captured_by_black']
+        'captured_by_black': captured_pieces['captured_by_black'],
+        'white_player_name': manager.players['white'].name,
+        'black_player_name': manager.players['black'].name
     })
 
 @api.route("/api/move", methods=["POST"])
