@@ -25,23 +25,54 @@
   color: #4a235a;
 }
 
-#start-botvbot-btn {
-  background-color: #8e44ad;
-  color: #fff;
-  border: none;
-  padding: 0.8rem 2rem;
-  font-size: 1.1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+/* Remove old start button styles */
+/* Hide game controls from play.css except for start game button and overlay */
+.game-controls, #resign-btn, #new-game-btn {
+  display: none !important;
 }
 
-#start-botvbot-btn:hover {
-  background-color: #6c3483;
+/* Overlay styles */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#game-not-started-overlay {
+  display: flex !important; /* Force display when game not started */
+}
+
+#game-not-started-overlay.hidden {
+  display: none !important; /* Force hide when game starts */
+}
+
+.overlay-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.overlay-button {
+  background: #8e44ad;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.overlay-button:hover {
+  background: #6c3483;
 }
 
 .speed-control {
@@ -119,9 +150,4 @@
 .pause-icon, .play-icon {
   display: inline-block;
   line-height: 1;
-}
-
-/* Hide game controls from play.css */
-.game-controls, #resign-btn, #new-game-btn, #start-game-btn, #game-not-started-overlay {
-  display: none !important;
 } 

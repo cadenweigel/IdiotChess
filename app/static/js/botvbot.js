@@ -8,7 +8,8 @@ import {
     setGameStarted,
     setBotColors,
     setWhiteBot,
-    setBlackBot
+    setBlackBot,
+    startGameBtn
 } from './gameState.js';
 
 let sessionId = null;
@@ -22,7 +23,6 @@ let gameTimeout = null;
 
 const statusMessage = document.getElementById('status-message');
 const movesList = document.getElementById('moves-list');
-const startBtn = document.getElementById('start-botvbot-btn');
 const whiteBotSelect = document.getElementById('white-bot-select');
 const blackBotSelect = document.getElementById('black-bot-select');
 const speedSlider = document.getElementById('game-speed');
@@ -30,6 +30,7 @@ const speedValue = document.getElementById('speed-value');
 const pauseBtn = document.getElementById('pause-btn');
 const pauseIcon = pauseBtn.querySelector('.pause-icon');
 const playIcon = pauseBtn.querySelector('.play-icon');
+const gameNotStartedOverlay = document.getElementById('game-not-started-overlay');
 
 // Speed mapping (1-5 to actual delays in ms)
 const SPEED_DELAYS = {
@@ -74,9 +75,14 @@ async function loadBotOptions() {
         optionB.dataset.avatar = bot.avatar;
         blackBotSelect.appendChild(optionB);
     });
+    
     // Set default: white = white_idiot (Wyatt), black = black_idiot (Moose)
     whiteBotSelect.value = 'white_idiot';
     blackBotSelect.value = 'black_idiot';
+    
+    // Update bot cards immediately after setting defaults
+    updateBotAvatarsAndNames();
+    updateBotSelectOptions();
 }
 
 function updateBotAvatarsAndNames() {
@@ -199,7 +205,7 @@ async function startBotvBotGame() {
         pauseIcon.style.display = 'inline-block';
         playIcon.style.display = 'none';
         statusMessage.textContent = 'Game ongoing';
-        startBtn.style.display = 'none';  // Hide the start button when game starts
+        gameNotStartedOverlay.classList.add('hidden');  // Use the new CSS class to hide the overlay
         clearMoveHistory();
         initializeBoard(); // Only call this after a game is started
         initializeMoveHistory();
@@ -216,10 +222,8 @@ async function playBotvBot() {
         showGameOver(state.status);
         return;
     }
-    // Make bot move
+    // Make bot move (which includes board update)
     await makeBotMove();
-    // Update board and move history
-    await updateBoardDisplay();
     // Continue if not game over
     gameTimeout = setTimeout(playBotvBot, moveDelay); // Store the timeout ID
 }
@@ -227,22 +231,18 @@ async function playBotvBot() {
 async function makeBotMove() {
     // Get the current state before making the move to know whose turn it is
     const currentState = await fetchBoardState();
-    
-    // Check if game is already over
-    if (currentState.status && (currentState.status.includes('checkmate') || currentState.status.includes('draw') || currentState.status.includes('stalemate'))) {
-        showGameOver(currentState.status);
-        return;
-    }
-    
     const moveColor = currentState.turn;  // Store the color before making the move
-
+    
     const response = await fetch('/api/bot-move', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId })
+        body: JSON.stringify({ 
+            session_id: sessionId,
+            bot_color: moveColor
+        })
     });
+
     const data = await response.json();
-    
     if (data.success) {
         // Only proceed with move processing if we have valid move data
         if (data.move && data.move.from && data.move.to) {
@@ -265,10 +265,10 @@ async function makeBotMove() {
                 data.move.to,
                 moveColor  // Use the stored color instead of getting it after the move
             );
+            
+            // Update board display with animation
+            await updateBoardDisplay();
         }
-        
-        // Update board display regardless of whether we had a move
-        await updateBoardDisplay();
         
         // Check if game is over after the move
         const newState = await fetchBoardState();
@@ -296,7 +296,7 @@ function showGameOver(message) {
     }
     gameOverOverlay.style.display = 'flex';
     statusMessage.textContent = message;
-    startBtn.style.display = 'block';  // Show the start button again when game is over
+    gameNotStartedOverlay.classList.remove('hidden');  // Show the overlay again when game is over
     pauseBtn.disabled = true;  // Disable pause button when game is over
     gameStarted = false;  // Reset game state
     setGameStarted(false);
@@ -329,12 +329,6 @@ pauseBtn.addEventListener('click', () => {
     }
 });
 
-startBtn.addEventListener('click', () => {
-    if (whiteBotSelect.value && blackBotSelect.value) {
-        startBotvBotGame();
-    }
-});
-
 whiteBotSelect.addEventListener('change', () => {
     updateBotAvatarsAndNames();
     updateBotSelectOptions();
@@ -347,8 +341,13 @@ blackBotSelect.addEventListener('change', () => {
 document.addEventListener('DOMContentLoaded', async () => {
     initializeDOMElements();
     await loadBotOptions();
-    updateBotAvatarsAndNames();
-    updateBotSelectOptions();
     renderDefaultBoard(); // Show the board and pieces immediately, no backend call
     pauseBtn.disabled = true; // Initially disable pause button until game starts
+    
+    // Add the start game button event listener here, after DOM is loaded
+    startGameBtn.addEventListener('click', () => {
+        if (whiteBotSelect.value && blackBotSelect.value) {
+            startBotvBotGame();
+        }
+    });
 }); 
