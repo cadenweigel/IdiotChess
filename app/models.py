@@ -16,6 +16,7 @@ class Game(db.Model):
     black_player_type = db.Column(db.String(20), nullable=False)
     white_player_name = db.Column(db.String(100))
     black_player_name = db.Column(db.String(100))
+    last_active = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
     
     # Relationships
     board_states = db.relationship('BoardState', backref='game', lazy=True)

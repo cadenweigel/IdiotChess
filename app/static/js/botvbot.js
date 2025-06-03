@@ -40,6 +40,9 @@ async function loadBotOptions() {
         optionB.dataset.avatar = bot.avatar;
         blackBotSelect.appendChild(optionB);
     });
+    // Set default: white = white_idiot (Wyatt), black = black_idiot (Moose)
+    whiteBotSelect.value = 'white_idiot';
+    blackBotSelect.value = 'black_idiot';
 }
 
 function updateBotAvatarsAndNames() {
@@ -53,6 +56,90 @@ function updateBotAvatarsAndNames() {
     blackAvatar.src = `/static/images/avatars/${selectedBlack.dataset.avatar}`;
     whiteName.textContent = selectedWhite.textContent;
     blackName.textContent = selectedBlack.textContent;
+}
+
+function updateBotSelectOptions() {
+    // Only prevent Wyatt vs Wyatt and Moose vs Moose
+    const whiteValue = whiteBotSelect.value;
+    const blackValue = blackBotSelect.value;
+    // Enable all first
+    for (let i = 0; i < whiteBotSelect.options.length; i++) {
+        whiteBotSelect.options[i].disabled = false;
+        blackBotSelect.options[i].disabled = false;
+    }
+    // Only disable if both are white_idiot or both are black_idiot
+    if (blackValue === 'white_idiot') {
+        for (let i = 0; i < whiteBotSelect.options.length; i++) {
+            if (whiteBotSelect.options[i].value === 'white_idiot') {
+                whiteBotSelect.options[i].disabled = true;
+            }
+        }
+    }
+    if (whiteValue === 'white_idiot') {
+        for (let i = 0; i < blackBotSelect.options.length; i++) {
+            if (blackBotSelect.options[i].value === 'white_idiot') {
+                blackBotSelect.options[i].disabled = true;
+            }
+        }
+    }
+    if (blackValue === 'black_idiot') {
+        for (let i = 0; i < whiteBotSelect.options.length; i++) {
+            if (whiteBotSelect.options[i].value === 'black_idiot') {
+                whiteBotSelect.options[i].disabled = true;
+            }
+        }
+    }
+    if (whiteValue === 'black_idiot') {
+        for (let i = 0; i < blackBotSelect.options.length; i++) {
+            if (blackBotSelect.options[i].value === 'black_idiot') {
+                blackBotSelect.options[i].disabled = true;
+            }
+        }
+    }
+    // If both are the same and are white_idiot or black_idiot, auto-change black
+    if (whiteValue && blackValue && whiteValue === blackValue && (whiteValue === 'white_idiot' || whiteValue === 'black_idiot')) {
+        for (let i = 0; i < blackBotSelect.options.length; i++) {
+            if (!blackBotSelect.options[i].disabled) {
+                blackBotSelect.selectedIndex = i;
+                break;
+            }
+        }
+    }
+}
+
+function renderDefaultBoard() {
+    const chessboard = document.getElementById('chessboard');
+    if (!chessboard) return;
+    chessboard.innerHTML = '';
+    const game = new window.Chess(); // chess.js global
+    const board = game.board(); // 2D array of pieces
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const square = document.createElement('div');
+            const isLightSquare = (row + col) % 2 === 0;
+            square.className = `square ${isLightSquare ? 'light' : 'dark'}`;
+            square.dataset.position = `${row},${col}`;
+            // Add piece if present
+            const piece = board[row][col];
+            if (piece) {
+                const color = piece.color === 'w' ? 'white' : 'black';
+                const type = piece.type;
+                const pieceNames = {
+                    'p': 'pawn',
+                    'n': 'knight',
+                    'b': 'bishop',
+                    'r': 'rook',
+                    'q': 'queen',
+                    'k': 'king'
+                };
+                const img = document.createElement('img');
+                img.src = `static/images/pieces/${color}_${pieceNames[type]}.png`;
+                img.className = 'piece-image';
+                square.appendChild(img);
+            }
+            chessboard.appendChild(square);
+        }
+    }
 }
 
 async function startBotvBotGame() {
@@ -75,7 +162,7 @@ async function startBotvBotGame() {
         gameStarted = true;
         statusMessage.textContent = 'Game ongoing';
         clearMoveHistory();
-        initializeBoard();
+        initializeBoard(); // Only call this after a game is started
         initializeMoveHistory();
         playBotvBot();
     } else {
@@ -132,11 +219,19 @@ startBtn.addEventListener('click', () => {
     }
 });
 
-whiteBotSelect.addEventListener('change', updateBotAvatarsAndNames);
-blackBotSelect.addEventListener('change', updateBotAvatarsAndNames);
+whiteBotSelect.addEventListener('change', () => {
+    updateBotAvatarsAndNames();
+    updateBotSelectOptions();
+});
+blackBotSelect.addEventListener('change', () => {
+    updateBotAvatarsAndNames();
+    updateBotSelectOptions();
+});
 
 document.addEventListener('DOMContentLoaded', async () => {
     initializeDOMElements();
     await loadBotOptions();
     updateBotAvatarsAndNames();
+    updateBotSelectOptions();
+    renderDefaultBoard(); // Show the board and pieces immediately, no backend call
 }); 

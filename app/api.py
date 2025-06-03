@@ -6,6 +6,7 @@ from app.game import GameManager
 from app.player import HumanPlayer
 from app.bots import IdiotBot, WhiteIdiotBot, BlackIdiotBot, GreedyBot, MinimaxBot, BetterMinimaxBotOne, BetterMinimaxBotTwo
 from app.models import db, Game, BoardState, Move
+from datetime import datetime, UTC, timedelta
 
 api = Blueprint("api", __name__)
 
@@ -131,16 +132,43 @@ def new_game_bots_only():
     if not white_bot_cls or not black_bot_cls:
         return jsonify({"error": "Invalid bot selection"}), 400
 
-    session_id = str(uuid.uuid4())
+    session_id = uuid.uuid4()
     manager = GameManager()
 
-    manager.set_players(
-        white_bot_cls(),  # enforced white bot
-        black_bot_cls()   # enforced black bot
-    )
+    # Instantiate bots with names and colors
+    white_bot = white_bot_cls(name=white_bot_cls.__name__, color="white")
+    black_bot = black_bot_cls(name=black_bot_cls.__name__, color="black")
+    manager.set_players(white_bot, black_bot)
 
-    current_app.config["games"][session_id] = manager
-    return jsonify({"session_id": session_id})
+    # Save to database
+    try:
+        game = Game(
+            session_id=session_id,
+            current_turn=manager.current_turn,
+            game_status="active",
+            white_player_type="bot",
+            black_player_type="bot",
+            white_player_name=white_bot_cls.__name__,
+            black_player_name=black_bot_cls.__name__
+        )
+        db.session.add(game)
+
+        initial_board_state = BoardState(
+            session_id=session_id,
+            move_number=0,
+            board_state=manager.to_dict()['board'],
+            captured_pieces=[]
+        )
+        db.session.add(initial_board_state)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating bot vs bot game: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+    # Keep in-memory copy for active game
+    current_app.config["games"][str(session_id)] = manager
+    return jsonify({"session_id": str(session_id)})
 
 @api.route("/api/bots", methods=["GET"])
 def get_available_bots():
@@ -357,6 +385,7 @@ def make_move():
         # Update game status
         game.current_turn = manager.current_turn
         game.game_status = manager.get_game_status()
+        game.last_active = datetime.now(UTC)
 
         # Commit all changes
         db.session.commit()
@@ -409,14 +438,20 @@ def bot_move():
         # Get the bot's move using the board directly
         move = player.decide_move(manager.board)
         
-        # If no move is found and we're in checkmate, return a special response
-        if not move and manager.board.is_checkmate(player.color):
+        # If no move is found and we're in checkmate or draw, update DB and return
+        if not move and (manager.board.is_checkmate(player.color) or manager.board.is_draw(player.color)):
+            game = Game.query.get(uuid.UUID(session_id))
+            if game:
+                # Use manager.get_game_status() for a descriptive status
+                game.game_status = manager.get_game_status()
+                game.last_active = datetime.now(UTC)
+                db.session.commit()
             return jsonify({
                 'success': True,
-                'status': 'checkmate',
-                'winner': 'black' if player.color == 'white' else 'white'
+                'status': manager.get_game_status(),
+                'winner': 'black' if player.color == 'white' else 'white' if manager.board.is_checkmate(player.color) else None
             })
-            
+        
         if not move:
             return jsonify({'error': 'No valid move found'}), 400
             
@@ -454,6 +489,11 @@ def bot_move():
         
         # Get captured pieces
         captured_pieces = manager.board.get_captured_pieces_unicode()
+        
+        game = Game.query.get(uuid.UUID(session_id))
+        if game:
+            game.last_active = datetime.now(UTC)
+            db.session.commit()
         
         return jsonify({
             'success': True,
@@ -498,3 +538,44 @@ def get_valid_moves():
 @api.route("/botvbot")
 def botvbot_page():
     return render_template("botvbot.html")
+
+@api.route("/api/resign", methods=["POST"])
+def resign_game():
+    data = request.get_json()
+    session_id = data.get("session_id")
+    resigning_color = data.get("resigning_color")
+    if not session_id or not resigning_color:
+        return jsonify({"error": "Missing session_id or resigning_color"}), 400
+    try:
+        session_id_uuid = uuid.UUID(session_id)
+    except Exception:
+        return jsonify({"error": "Invalid session_id format"}), 400
+
+    # Update in-memory game manager if present
+    manager = current_app.config["games"].get(str(session_id))
+    if manager:
+        # Optionally, you could set a flag or status in the manager
+        pass
+
+    # Update database
+    game = Game.query.get(session_id_uuid)
+    if not game:
+        return jsonify({"error": "Game not found"}), 404
+    game.game_status = f"Resigned by {resigning_color}"
+    game.last_active = datetime.now(UTC)
+    db.session.commit()
+    return jsonify({"success": True, "status": game.game_status})
+
+@api.route("/api/cleanup-abandoned", methods=["POST"])
+def cleanup_abandoned():
+    timeout_minutes = int(request.json.get("timeout", 60))
+    cutoff = datetime.now(UTC) - timedelta(minutes=timeout_minutes)
+    abandoned_games = Game.query.filter(
+        Game.game_status == "active",
+        Game.last_active < cutoff
+    ).all()
+    count = len(abandoned_games)
+    for game in abandoned_games:
+        db.session.delete(game)
+    db.session.commit()
+    return jsonify({"deleted": count})

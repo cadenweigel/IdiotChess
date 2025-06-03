@@ -112,10 +112,22 @@ async function handleSquareClick(event) {
 function initializeEventListeners() {
     // Handle resign button
     if (resignBtn) {
-        resignBtn.addEventListener('click', () => {
+        resignBtn.addEventListener('click', async () => {
             if (confirm('Are you sure you want to resign?')) {
-                statusMessage.textContent = 'Game over - Resigned';
-                // TODO: Add resign endpoint to backend
+                const resigningColor = (getWhiteBot() === 'You') ? 'white' : 'black';
+                const response = await fetch('/api/resign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: getSessionId(), resigning_color: resigningColor })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    statusMessage.textContent = data.status;
+                    // Optionally show game over overlay if available
+                    if (typeof showGameOver === 'function') showGameOver(data.status);
+                } else {
+                    statusMessage.textContent = data.error || 'Failed to resign.';
+                }
             }
         });
     }
