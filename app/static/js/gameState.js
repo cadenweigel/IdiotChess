@@ -40,7 +40,8 @@ function initializeDOMElements() {
 // Update game status message
 export function updateStatus(message) {
     if (statusMessage) {
-        statusMessage.textContent = message;
+        // Display "Game ongoing" when status is "active"
+        statusMessage.textContent = message === "active" ? "Game ongoing" : message;
     }
 }
 

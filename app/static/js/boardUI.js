@@ -351,10 +351,9 @@ async function doUpdateBoard(animatingMove = null) {
             }
         }
 
-        // Update status and turn indicator
-        const statusMessageElem = document.getElementById('status-message');
-        if (statusMessageElem && data.status) {
-            statusMessageElem.textContent = data.status;
+        // Update status and turn indicator using the proper functions
+        if (data.status) {
+            updateStatus(data.status);
         }
         
         if (data.turn) {
