@@ -1,0 +1,44 @@
+/* Bot vs Bot Styles */
+@import url('play.css');
+
+.botvbot-selectors {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.bot-selector label {
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.bot-selector select {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid #8e44ad;
+  font-size: 1rem;
+  background: #f8f0fc;
+  color: #4a235a;
+}
+
+#start-botvbot-btn {
+  background-color: #8e44ad;
+  color: #fff;
+  border: none;
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#start-botvbot-btn:hover {
+  background-color: #6c3483;
+}
+
+/* Hide game controls from play.css */
+.game-controls, #resign-btn, #new-game-btn, #start-game-btn, #game-not-started-overlay {
+  display: none !important;
+} 

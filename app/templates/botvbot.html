@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>IdiotChess - Bot vs Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/botvbot.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
+    <link href="https://fonts.cdnfonts.com/css/chess-7" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="game-header">
+            <h1>IdiotChess</h1>
+            <div class="game-status">
+                <span id="status-message">Select bots to watch a game...</span>
+            </div>
+        </div>
+        <div class="botvbot-selectors">
+            <div class="bot-selector" id="white-bot-selector">
+                <label for="white-bot-select">White Bot:</label>
+                <select id="white-bot-select"></select>
+            </div>
+            <div class="bot-selector" id="black-bot-selector">
+                <label for="black-bot-select">Black Bot:</label>
+                <select id="black-bot-select"></select>
+            </div>
+            <button id="start-botvbot-btn">Start Bot vs Bot</button>
+        </div>
+        <div class="game-container">
+            <div class="side-panel">
+                <div class="move-history">
+                    <h3>Move History</h3>
+                    <div id="moves-list"></div>
+                </div>
+            </div>
+            <div class="board-container">
+                <div id="chessboard"></div>
+                <div id="game-over-overlay" class="overlay" style="display: none;">
+                    <div class="overlay-content">
+                        <h2 id="game-over-message">Game Over</h2>
+                        <p id="game-over-details"></p>
+                        <button id="home-btn" onclick="window.location.href='/'">Return Home</button>
+                    </div>
+                </div>
+            </div>
+            <div class="game-info">
+                <div id="white-player-info" class="player-info white-player">
+                    <img id="white-avatar" class="player-avatar" alt="White bot avatar" />
+                    <div class="player-details">
+                        <h3 id="white-name">White Bot</h3>
+                        <div id="white-captures" class="captured-pieces-list"></div>
+                    </div>
+                </div>
+                <div id="black-player-info" class="player-info black-player">
+                    <img id="black-avatar" class="player-avatar" alt="Black bot avatar" />
+                    <div class="player-details">
+                        <h3 id="black-name">Black Bot</h3>
+                        <div id="black-captures" class="captured-pieces-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/botvbot.js') }}"></script>
+</body>
+</html> 

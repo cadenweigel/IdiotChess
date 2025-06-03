@@ -494,3 +494,7 @@ def get_valid_moves():
 
     moves = manager.get_valid_moves((row, col))
     return jsonify({"valid_moves": moves})
+
+@api.route("/botvbot")
+def botvbot_page():
+    return render_template("botvbot.html")
