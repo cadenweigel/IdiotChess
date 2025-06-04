@@ -325,10 +325,21 @@ function addMoveToHistory(from, to, color) {
 }
 
 // Handle resign button
-resignBtn.addEventListener('click', () => {
+resignBtn.addEventListener('click', async () => {
     if (confirm('Are you sure you want to resign?')) {
-        statusMessage.textContent = 'Game over - Resigned';
-        // TODO: Add resign endpoint to backend
+        const resigningColor = (whiteBot === 'You') ? 'white' : 'black';
+        const response = await fetch('/api/resign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, resigning_color: resigningColor })
+        });
+        const data = await response.json();
+        if (data.success) {
+            statusMessage.textContent = data.status;
+            showGameOver(data.status);
+        } else {
+            statusMessage.textContent = data.error || 'Failed to resign.';
+        }
     }
 });
 

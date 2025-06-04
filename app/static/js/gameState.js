@@ -28,13 +28,13 @@ function initializeDOMElements() {
     gameNotStartedOverlay = document.getElementById('game-not-started-overlay');
 
     // Log any missing elements for debugging
-    if (!board) console.error('Chessboard element not found');
-    if (!statusMessage) console.error('Status message element not found');
-    if (!movesList) console.error('Moves list element not found');
-    if (!resignBtn) console.error('Resign button not found');
-    if (!newGameBtn) console.error('New game button not found');
-    if (!startGameBtn) console.error('Start game button not found');
-    if (!gameNotStartedOverlay) console.error('Game not started overlay not found');
+    if (!board) console.debug('Chessboard element not found');
+    if (!statusMessage) console.debug('Status message element not found');
+    if (!movesList) console.debug('Moves list element not found');
+    if (!resignBtn) console.debug('Resign button not found');
+    if (!newGameBtn) console.debug('New game button not found');
+    if (!startGameBtn) console.debug('Start game button not found');
+    if (!gameNotStartedOverlay) console.debug('Game not started overlay not found');
 }
 
 // Update game status message

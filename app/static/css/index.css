@@ -296,3 +296,24 @@ button:disabled {
   outline: none;
   border-color: #666;
 }
+
+.botvbot-section {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.botvbot-btn {
+  background-color: #8e44ad;
+  color: #fff;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background 0.2s;
+}
+
+.botvbot-btn:hover {
+  background-color: #6c3483;
+}

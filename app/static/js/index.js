@@ -115,6 +115,14 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Select random color by default
   document.querySelector('.color-option[data-color="random"]').classList.add('selected');
+  
+  // Add click handler for Bot vs Bot button
+  const botvbotBtn = document.getElementById('botvbot-btn');
+  if (botvbotBtn) {
+    botvbotBtn.addEventListener('click', () => {
+      window.location.href = '/botvbot';
+    });
+  }
 });
 
 document.getElementById("start-game-form").addEventListener("submit", async (e) => {
