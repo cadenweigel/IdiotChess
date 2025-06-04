@@ -150,9 +150,11 @@ function updateCapturedPieces(capturedByWhite, capturedByBlack) {
     console.log('Updating captured pieces:', { capturedByWhite, capturedByBlack });
     const whiteCaptures = document.getElementById('white-captures');
     const blackCaptures = document.getElementById('black-captures');
+    const whiteName = document.getElementById('white-name');
+    const blackName = document.getElementById('black-name');
     
-    if (!whiteCaptures || !blackCaptures) {
-        console.warn('Capture containers not found:', { whiteCaptures, blackCaptures });
+    if (!whiteCaptures || !blackCaptures || !whiteName || !blackName) {
+        console.warn('Capture containers or player names not found:', { whiteCaptures, blackCaptures, whiteName, blackName });
         return;
     }
 
@@ -175,6 +177,31 @@ function updateCapturedPieces(capturedByWhite, capturedByBlack) {
         '♛': { type: 'queen', color: 'black' },
         '♚': { type: 'king', color: 'black' }
     };
+
+    // Piece values for material calculation
+    const pieceValues = {
+        'pawn': 1,
+        'knight': 3,
+        'bishop': 3,
+        'rook': 5,
+        'queen': 9,
+        'king': 0 // King is not counted
+    };
+
+    // Calculate material value of captured pieces
+    function calcMaterial(capturedArr) {
+        let total = 0;
+        for (const symbol of capturedArr) {
+            const info = symbolToType[symbol];
+            if (info && pieceValues[info.type] !== undefined) {
+                total += pieceValues[info.type];
+            }
+        }
+        return total;
+    }
+    const whiteMaterial = calcMaterial(capturedByWhite); // White's captures (black pieces)
+    const blackMaterial = calcMaterial(capturedByBlack); // Black's captures (white pieces)
+    const diff = whiteMaterial - blackMaterial;
 
     // Add captured pieces
     if (Array.isArray(capturedByWhite)) {
@@ -201,6 +228,25 @@ function updateCapturedPieces(capturedByWhite, capturedByBlack) {
                 blackCaptures.appendChild(img);
             }
         });
+    }
+
+    // Show point advantage next to the leading player's name
+    // Remove any previous advantage indicators
+    whiteName.querySelector('.point-advantage')?.remove();
+    blackName.querySelector('.point-advantage')?.remove();
+
+    if (diff > 0) {
+        // White is ahead
+        const adv = document.createElement('span');
+        adv.className = 'point-advantage';
+        adv.textContent = ` +${diff}`;
+        whiteName.appendChild(adv);
+    } else if (diff < 0) {
+        // Black is ahead
+        const adv = document.createElement('span');
+        adv.className = 'point-advantage';
+        adv.textContent = ` +${-diff}`;
+        blackName.appendChild(adv);
     }
 }
 

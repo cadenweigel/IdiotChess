@@ -132,15 +132,6 @@ function initializeEventListeners() {
         });
     }
 
-    // Handle new game button
-    if (newGameBtn) {
-        newGameBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to start a new game?')) {
-                window.location.href = '/';
-            }
-        });
-    }
-
     // Handle start game button click
     if (startGameBtn && gameNotStartedOverlay) {
         startGameBtn.addEventListener('click', async () => {

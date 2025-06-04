@@ -345,12 +345,67 @@ resignBtn.addEventListener('click', async () => {
 
 // Handle new game button
 newGameBtn.addEventListener('click', async () => {
-    // Reset the game state
-    selectedSquare = null;
-    clearHighlights();
-    
-    // Redirect to the home page
-    window.location.href = '/';
+    if (!confirm('Are you sure you want to start a new game?')) {
+        return;
+    }
+    // Show loading state
+    newGameBtn.disabled = true;
+    newGameBtn.textContent = 'Starting...';
+    try {
+        // Only do the new logic if playing vs a bot
+        const isBotGame = (getWhiteBot() !== 'You' || getBlackBot() !== 'You');
+        if (!isBotGame) {
+            window.location.href = '/';
+            return;
+        }
+
+        // 1. Fetch current board state to get player name
+        const boardRes = await fetch(`/api/board?session_id=${getSessionId()}`);
+        const boardData = await boardRes.json();
+        let playerName = 'default';
+        let botType = null;
+        let playerColor = null;
+        if (getWhiteBot() !== 'You') {
+            botType = getWhiteBot();
+            playerColor = 'black';
+            playerName = boardData.black_player_name || 'default';
+        } else {
+            botType = getBlackBot();
+            playerColor = 'white';
+            playerName = boardData.white_player_name || 'default';
+        }
+
+        // 2. Resign the current game (if not already over)
+        await fetch('/api/resign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: getSessionId(), resigning_color: playerColor })
+        });
+
+        // 3. Start a new game with the same bot and color
+        const newGameRes = await fetch('/api/new-game/bot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                bot_type: botType,
+                player_color: playerColor,
+                player_name: playerName
+            })
+        });
+        const newGameData = await newGameRes.json();
+        if (newGameData.session_id) {
+            // 4. Redirect to the new game
+            window.location.href = `/play?session_id=${newGameData.session_id}&bot_color=${newGameData.bot_color}&bot_type=${botType}`;
+        } else {
+            alert('Failed to start new game.');
+            newGameBtn.disabled = false;
+            newGameBtn.textContent = 'New Game';
+        }
+    } catch (err) {
+        alert('Error starting new game.');
+        newGameBtn.disabled = false;
+        newGameBtn.textContent = 'New Game';
+    }
 });
 
 // Handle start game button click

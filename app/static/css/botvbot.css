@@ -159,4 +159,15 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+}
+
+.point-advantage {
+    margin-left: 0.5em;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #27ae60; /* green for positive advantage */
+    background: rgba(39, 174, 96, 0.08);
+    border-radius: 6px;
+    padding: 2px 8px;
+    vertical-align: middle;
 } 
