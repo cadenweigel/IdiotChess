@@ -150,4 +150,13 @@
 .pause-icon, .play-icon {
   display: inline-block;
   line-height: 1;
+}
+
+.moves-list-scroll {
+    max-height: 570px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 } 

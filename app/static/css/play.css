@@ -54,6 +54,9 @@ body {
 .board-container {
     flex: 0 0 auto;
     position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .overlay {
@@ -118,8 +121,9 @@ body {
     grid-template-columns: repeat(8, 1fr);
     width: 640px;
     height: 640px;
-    border: 2px solid #333;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    transform: translate(0px, 0px);
+    position: relative;
 }
 
 .square {
@@ -363,11 +367,23 @@ body {
     padding: 1rem;
     border-radius: 8px;
     flex-grow: 1;
-    min-height: 300px;
+    min-height: 570px;
+}
+
+.moves-list-scroll {
+    max-height: 570px;
     overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
 .move-history h3 {
+    position: sticky;
+    top: 0;
+    background: #f5f5f5;
+    z-index: 2;
     text-align: center;
     margin-bottom: 1rem;
     color: #333;
